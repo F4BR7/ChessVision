@@ -3,6 +3,12 @@ import type { Evaluation } from '$models/Evaluation';
 import Label from '$models/Label';
 import { type Chess, type Color, type Move, type PieceSymbol } from 'chess.js';
 
+export interface AccuracyBreakdown {
+  overall: number;
+  white: number;
+  black: number;
+}
+
 export function formatScore(evaluation: Evaluation) {
   if (evaluation.type === 'mate') {
     if (Math.abs(evaluation.score) === Infinity) {
@@ -157,4 +163,60 @@ export function computeWinChance(evaluation: RawEval) {
 
 export function computeWinChanceLost(previousEval: RawEval, currentEval: RawEval) {
   return computeWinChance(previousEval) - computeWinChance(currentEval);
+}
+
+/**
+ * Per-move accuracy (0-100) derived from how much win percentage the moving
+ * player lost. Uses the formula from Lichess/CAPS-style accuracy metrics.
+ */
+export function moveAccuracy(winChanceLost: number): number {
+  const lost = Math.max(0, winChanceLost);
+  const accuracy = 103.1668 * Math.exp(-0.04354 * lost) - 3.1669;
+  return Math.max(0, Math.min(100, accuracy));
+}
+
+/**
+ * Compute overall and per-color accuracy from a list of evaluations (one per
+ * move, scored from White's perspective, as produced by `analyze_game`).
+ */
+export function computeAccuracy(evaluations: Evaluation[], history: Move[]): AccuracyBreakdown {
+  const whiteAcc: number[] = [];
+  const blackAcc: number[] = [];
+
+  for (let i = 0; i < history.length && i < evaluations.length; i++) {
+    const winWhiteAfter = computeWinChance(evaluations[i]);
+    const winWhiteBefore = i === 0 ? 50 : computeWinChance(evaluations[i - 1]);
+    const color = history[i].color;
+    // win percentage lost from the moving player's point of view
+    const lost = color === 'w' ? winWhiteBefore - winWhiteAfter : winWhiteAfter - winWhiteBefore;
+    const acc = moveAccuracy(lost);
+    if (color === 'w') whiteAcc.push(acc);
+    else blackAcc.push(acc);
+  }
+
+  const average = (arr: number[]): number =>
+    arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : 0;
+
+  return {
+    overall: average([...whiteAcc, ...blackAcc]),
+    white: average(whiteAcc),
+    black: average(blackAcc)
+  };
+}
+
+/** Count inaccuracies, mistakes and blunders across a list of evaluations. */
+export function countMistakes(evaluations: Evaluation[]): {
+  inaccuracies: number;
+  mistakes: number;
+  blunders: number;
+} {
+  let inaccuracies = 0;
+  let mistakes = 0;
+  let blunders = 0;
+  for (const evaluation of evaluations) {
+    if (evaluation.label === Label.INACCURACY) inaccuracies++;
+    else if (evaluation.label === Label.MISTAKE) mistakes++;
+    else if (evaluation.label === Label.BLUNDER) blunders++;
+  }
+  return { inaccuracies, mistakes, blunders };
 }

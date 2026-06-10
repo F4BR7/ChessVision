@@ -1,102 +1,119 @@
 <script lang="ts">
   import { games } from '$lib/games';
+  import { computeStatistics, computeOpeningStats } from '$lib/stats';
   import StatsCard from '../../components/StatsCard.svelte';
 
-  const allGames = games.getRecent(100);
-
-  // Calculate statistics
-  $: totalGames = allGames.length;
-  $: avgPrecision = allGames.length > 0 
-    ? Math.round(allGames.reduce((sum, g) => sum + (g.precision || 0), 0) / allGames.filter(g => g.precision).length)
-    : 0;
-  $: totalErrors = allGames.reduce((sum, g) => sum + (g.errors || 0), 0);
-  $: totalBlunders = allGames.reduce((sum, g) => sum + (g.blunders || 0), 0);
-
-  // Games by type
-  $: aiGames = allGames.filter(g => g.type === 'AI').length;
-  $: pgnGames = allGames.filter(g => g.type === 'PGN').length;
-  $: liveGames = allGames.filter(g => g.type === 'Live').length;
-
-  // Games by difficulty
-  $: difficultyStats = {
-    1: allGames.filter(g => g.type === 'AI' && g.difficulty === 1).length,
-    2: allGames.filter(g => g.type === 'AI' && g.difficulty === 2).length,
-    3: allGames.filter(g => g.type === 'AI' && g.difficulty === 3).length,
-    4: allGames.filter(g => g.type === 'AI' && g.difficulty === 4).length,
-    5: allGames.filter(g => g.type === 'AI' && g.difficulty === 5).length
-  };
+  // NOTE: This page is the foundation for the upcoming Statistics module.
+  // It consumes the pure helpers in `$lib/stats` so future visualizations
+  // (rating progression, accuracy trends, per-opening performance) can be
+  // layered on top without touching data-aggregation logic.
+  $: stats = computeStatistics($games);
+  $: openingStats = computeOpeningStats($games).slice(0, 5);
+  $: recent = $games.slice(0, 5);
+  $: recentAccuracy = (() => {
+    const values = recent.map((g) => g.accuracy).filter((a): a is number => typeof a === 'number');
+    return values.length ? Math.round(values.reduce((a, b) => a + b, 0) / values.length) : 0;
+  })();
+  $: recentMistakes = recent.reduce((sum, g) => sum + (g.mistakes ?? 0), 0);
+  $: recentBlunders = recent.reduce((sum, g) => sum + (g.blunders ?? 0), 0);
 </script>
 
 <div class="max-w-7xl mx-auto px-4 py-8">
-  <h1 class="h1 mb-12 text-white">Estadísticas</h1>
+  <div class="flex items-center gap-3 mb-2">
+    <h1 class="h1 text-white">Estadísticas</h1>
+    <span class="badge variant-soft-primary">Base</span>
+  </div>
+  <p class="text-surface-400 mb-12">
+    Estructura inicial del módulo de estadísticas. Más métricas próximamente.
+  </p>
 
   <!-- Overall Stats -->
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
     <div class="card p-6 bg-gradient-to-br from-primary-600 to-primary-700 text-white">
-      <div class="text-5xl font-bold mb-2">{totalGames}</div>
+      <div class="text-5xl font-bold mb-2">{stats.totalGames}</div>
       <div class="text-lg opacity-90">Partidas Totales</div>
     </div>
 
-    <div class="card p-6 bg-gradient-to-br from-accent-600 to-accent-700 text-white">
-      <div class="text-5xl font-bold mb-2">{avgPrecision}%</div>
+    <div class="card p-6 bg-gradient-to-br from-tertiary-600 to-tertiary-700 text-white">
+      <div class="text-5xl font-bold mb-2">{stats.averageAccuracy}%</div>
       <div class="text-lg opacity-90">Precisión Promedio</div>
     </div>
 
     <div class="card p-6 bg-gradient-to-br from-warning-600 to-warning-700 text-white">
-      <div class="text-5xl font-bold mb-2">{totalErrors}</div>
+      <div class="text-5xl font-bold mb-2">{stats.totalMistakes}</div>
       <div class="text-lg opacity-90">Errores Totales</div>
     </div>
 
     <div class="card p-6 bg-gradient-to-br from-error-600 to-error-700 text-white">
-      <div class="text-5xl font-bold mb-2">{totalBlunders}</div>
-      <div class="text-lg opacity-90">Blunders Totales</div>
+      <div class="text-5xl font-bold mb-2">{stats.totalBlunders}</div>
+      <div class="text-lg opacity-90">Torpezas Totales</div>
     </div>
   </div>
 
-  <!-- Games by Type -->
+  <!-- Games by Type / Result -->
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
     <div class="card p-6 bg-surface-800 border border-surface-700">
       <h2 class="h2 mb-6 text-white">Partidas por Tipo</h2>
       <div class="space-y-4">
         <div class="flex items-center justify-between p-3 bg-surface-700 rounded">
           <span class="text-surface-300">vs IA</span>
-          <span class="text-white font-bold text-xl">{aiGames}</span>
+          <span class="text-white font-bold text-xl">{stats.byType.AI}</span>
         </div>
         <div class="flex items-center justify-between p-3 bg-surface-700 rounded">
           <span class="text-surface-300">PGN Analizados</span>
-          <span class="text-white font-bold text-xl">{pgnGames}</span>
+          <span class="text-white font-bold text-xl">{stats.byType.PGN}</span>
         </div>
         <div class="flex items-center justify-between p-3 bg-surface-700 rounded">
-          <span class="text-surface-300">Partidas Live</span>
-          <span class="text-white font-bold text-xl">{liveGames}</span>
+          <span class="text-surface-300">Revisión Online</span>
+          <span class="text-white font-bold text-xl">{stats.byType.Online}</span>
         </div>
       </div>
     </div>
 
-    <!-- Games by Difficulty -->
     <div class="card p-6 bg-surface-800 border border-surface-700">
-      <h2 class="h2 mb-6 text-white">Partidas vs IA por Dificultad</h2>
+      <h2 class="h2 mb-6 text-white">Resultados</h2>
       <div class="space-y-4">
-        {#each [1, 2, 3, 4, 5] as level}
-          <div class="flex items-center justify-between p-3 bg-surface-700 rounded">
-            <span class="text-surface-300">Nivel {level}</span>
-            <span class="text-white font-bold text-xl">{difficultyStats[level]}</span>
-          </div>
-        {/each}
+        <div class="flex items-center justify-between p-3 bg-surface-700 rounded">
+          <span class="text-surface-300">Ganan Blancas</span>
+          <span class="text-white font-bold text-xl">{stats.byResult['1-0']}</span>
+        </div>
+        <div class="flex items-center justify-between p-3 bg-surface-700 rounded">
+          <span class="text-surface-300">Ganan Negras</span>
+          <span class="text-white font-bold text-xl">{stats.byResult['0-1']}</span>
+        </div>
+        <div class="flex items-center justify-between p-3 bg-surface-700 rounded">
+          <span class="text-surface-300">Tablas</span>
+          <span class="text-white font-bold text-xl">{stats.byResult['1/2-1/2']}</span>
+        </div>
       </div>
     </div>
   </div>
 
+  <!-- Top openings -->
+  {#if openingStats.length > 0}
+    <div class="mb-12">
+      <h2 class="h2 mb-6 text-white">Aperturas Más Jugadas</h2>
+      <div class="card p-6 bg-surface-800 border border-surface-700 space-y-3">
+        {#each openingStats as opening}
+          <div class="flex items-center justify-between p-3 bg-surface-700 rounded">
+            <span class="text-surface-300 truncate">{opening.opening}</span>
+            <span class="text-white font-bold">{opening.count}</span>
+          </div>
+        {/each}
+      </div>
+    </div>
+  {/if}
+
   <!-- Recent Performance -->
-  {#if allGames.length > 0}
+  {#if recent.length > 0}
     <div class="mb-12">
       <h2 class="h2 mb-6 text-white">Rendimiento Reciente</h2>
       <div class="card p-6 bg-surface-800 border border-surface-700">
-        <StatsCard 
+        <StatsCard
           title="Últimas 5 Partidas"
-          precision={Math.round(allGames.slice(0, 5).reduce((sum, g) => sum + (g.precision || 0), 0) / allGames.slice(0, 5).filter(g => g.precision).length) || 0}
-          errors={allGames.slice(0, 5).reduce((sum, g) => sum + (g.errors || 0), 0)}
-          blunders={allGames.slice(0, 5).reduce((sum, g) => sum + (g.blunders || 0), 0)}
+          precision={recentAccuracy}
+          errors={recentMistakes}
+          blunders={recentBlunders}
         />
       </div>
     </div>
