@@ -5,20 +5,58 @@
   import NavigationFooter from './tabs/footers/NavigationFooter.svelte';
   import Report from './tabs/Report.svelte';
   import Settings from './tabs/Settings.svelte';
-  import { getContext } from 'svelte';
-  import type { Chess, Move } from 'chess.js';
+  import { getContext, onMount } from 'svelte';
+  import { Chess as ChessClass, type Chess, type Move } from 'chess.js';
   import type { Readable, Writable } from 'svelte/store';
   import { analyze_game } from '$lib/engine';
   import type { Evaluation } from '$models/Evaluation';
   import type { Settings as SettingsType } from '$models/Settings';
   import { log } from '$lib/log';
+  import { page } from '$app/stores';
+  import { games } from '$lib/games';
+  import { buildGameRecord } from '$lib/pgn';
+  import { computeAccuracy, countMistakes } from '$lib/evaluation';
+  import { consumePendingPgn } from '$lib/library';
 
   let currentTab: string = 'load';
 
   // Load
   let strPgn: string = '';
+  let initialPgn: string = '';
   let isLoading: boolean = false;
   let progress = 0;
+
+  // Whether the analysis happened from the "Revisar" (online review) route.
+  $: isReview = $page.url.pathname.startsWith('/review');
+
+  // Persist a finished analysis into the local game library.
+  const saveAnalyzedGame = (pgn: string, report: Evaluation[], moves: Move[]) => {
+    try {
+      const recordChess = new ChessClass();
+      recordChess.loadPgn(pgn);
+      const accuracy = computeAccuracy(report, moves);
+      const { inaccuracies, mistakes, blunders } = countMistakes(report);
+      const record = buildGameRecord(recordChess, recordChess.history({ verbose: true }), {
+        type: isReview ? 'Online' : 'PGN',
+        accuracy: accuracy.overall,
+        inaccuracies,
+        mistakes,
+        blunders,
+        event: isReview ? 'Revisión online' : 'Análisis'
+      });
+      games.addGame(record);
+    } catch (e) {
+      log(`No se pudo guardar la partida analizada: ${e}`);
+    }
+  };
+
+  onMount(() => {
+    const pending = consumePendingPgn();
+    if (pending) {
+      initialPgn = pending;
+      strPgn = pending;
+    }
+  });
 
   const setProgress = (n: number) => {
     progress = n;
@@ -43,6 +81,7 @@
       const report = await analyze_game($engine, $history, chess, $settings.depth, setProgress);
       log(report);
       evaluations.set(report);
+      saveAnalyzedGame(strPgn, report, $history);
       currentTab = 'report';
     } catch (e) {
       alert('Se produjo un error, inténtalo de nuevo.');
@@ -70,7 +109,7 @@
       <Tab bind:group={currentTab} name="settings" value="settings">🛠️ Ajustes</Tab>
       <svelte:fragment slot="panel">
         {#if currentTab === 'load'}
-          <Load onChange={onChangeStrPgn} {analyze} {isLoading} />
+          <Load onChange={onChangeStrPgn} {analyze} {isLoading} {initialPgn} />
         {:else if currentTab === 'report'}
           <Report />
         {:else if currentTab === 'settings'}

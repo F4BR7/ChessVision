@@ -9,12 +9,13 @@
   export let onChange: (pgn: string) => void = (pgn) => console.log('pgn => ', pgn);
   export let analyze: () => void;
   export let isLoading;
+  export let initialPgn: string = '';
 
   const settings: Writable<Settings> = getContext('settings');
 
   const modalStore = getModalStore();
-  let loader: string = 'chesscom';
-  let strPgn: string = '';
+  let loader: string = initialPgn ? 'pgn' : 'chesscom';
+  let strPgn: string = initialPgn;
 
   // PGN fields
   let disabledImportPgn: boolean = false;
@@ -56,7 +57,7 @@
     }
   };
 
-  const onGameSelected = (game: any, orientation: 'w' | 'b') => {
+  const onGameSelected = (game: { pgn: string }, orientation: 'w' | 'b') => {
     strPgn = game.pgn;
     onChange(strPgn);
     $settings.orientation = orientation;
