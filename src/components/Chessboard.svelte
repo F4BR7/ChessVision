@@ -37,10 +37,10 @@
   // Map difficulty level to Stockfish depth
   const getDifficultyDepth = (difficulty: number): number => {
     const depthMap: { [key: number]: number } = {
-      1: 8,
-      2: 12,
-      3: 15,
-      4: 18,
+      1: 2,
+      2: 5,
+      3: 10,
+      4: 15,
       5: 20
     };
     return depthMap[difficulty] || 15;

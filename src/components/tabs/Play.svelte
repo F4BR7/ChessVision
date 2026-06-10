@@ -19,24 +19,20 @@
 
   <div class="space-y-4">
     <div>
-      <label class="font-bold block mb-2">Nivel de dificultad</label>
+      <h3 class="font-bold block mb-2">Nivel de dificultad</h3>
       <RadioGroup>
-        <RadioItem bind:group={difficulty} name="difficulty" value={1}>
-          Nivel 1 (Principiante)
-        </RadioItem>
-        <RadioItem bind:group={difficulty} name="difficulty" value={2}>
-          Nivel 2 (Intermedio)
-        </RadioItem>
-        <RadioItem bind:group={difficulty} name="difficulty" value={3}>
-          Nivel 3 (Avanzado)
-        </RadioItem>
-        <RadioItem bind:group={difficulty} name="difficulty" value={4}>
-          Nivel 4 (Experto)
-        </RadioItem>
-        <RadioItem bind:group={difficulty} name="difficulty" value={5}>
-          Nivel 5 (Maestro)
-        </RadioItem>
+      <RadioItem bind:group={difficulty} name="difficulty" value={1}>Nivel 1 - Principiante (~500 Elo)</RadioItem>
+
+      <RadioItem bind:group={difficulty} name="difficulty" value={2}>Nivel 2 - Aficionado (~900 Elo)</RadioItem>
+
+      <RadioItem bind:group={difficulty} name="difficulty" value={3}>Nivel 3 - Intermedio (~1400 Elo)</RadioItem>
+
+      <RadioItem bind:group={difficulty} name="difficulty" value={4}>Nivel 4 - Experto (~2200 Elo)</RadioItem>
+
+      <RadioItem bind:group={difficulty} name="difficulty" value={5}>Nivel 5 - Maestro (~3000 Elo)</RadioItem>
+  
       </RadioGroup>
+
     </div>
 
     <button

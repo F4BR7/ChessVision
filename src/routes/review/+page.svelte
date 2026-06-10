@@ -9,14 +9,20 @@
 </script>
 
 <!-- Review Online Games: Board + Move List + Engine Review -->
-<div class="flex flex-wrap justify-center my-6 md:my-16 gap-6 px-4">
-  <div class="size-4/5 md:size-3/5 lg:size-5/12 flex gap-x-4">
-    <EvaluationBar evaluation={$evaluation} />
-    <div class="grow">
-      <Chessboard />
+<div class="mx-auto my-6 md:my-10 max-w-[1600px] px-4">
+  <div class="flex justify-center gap-8 items-start">
+
+    <div class="flex flex-1 max-w-[800px] gap-4">
+      <EvaluationBar evaluation={$evaluation} />
+
+      <div class="flex-1">
+        <Chessboard />
+      </div>
     </div>
-  </div>
-  <div class="w-4/5 md:w-1/4">
-    <AnalysisPanel />
+
+    <div class="w-[420px] shrink-0">
+      <AnalysisPanel />
+    </div>
+
   </div>
 </div>

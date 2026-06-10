@@ -20,6 +20,10 @@
 
   let currentTab: string = 'load';
 
+  // dsiplay names for players, not necessarily the ones from the PGN tags
+  let whitePlayer = 'Blancas';
+  let blackPlayer = 'Negras';
+
   // Load
   let strPgn: string = '';
   let initialPgn: string = '';
@@ -75,6 +79,9 @@
     log(strPgn);
     try {
       chess.loadPgn(strPgn);
+      const headers = chess.header();
+      whitePlayer = headers.White ?? 'Blancas';
+      blackPlayer = headers.Black ?? 'Negras';
       history.set(chess.history({ verbose: true }));
       move.set(-1);
       position.set($history[0].before);
@@ -103,6 +110,10 @@
 
 <div class="card p-4 h-full flex flex-col">
   <section class="mb-4 grow">
+  <div class="mb-3 flex justify-between text-sm text-surface-300">
+    <span>Blancas: {whitePlayer}</span>
+    <span>Negras: {blackPlayer}</span>
+  </div>
     <TabGroup justify="justify-center">
       <Tab bind:group={currentTab} name="load" value="load">💾 Carga</Tab>
       <Tab bind:group={currentTab} name="report" value="report">📊 Informe</Tab>

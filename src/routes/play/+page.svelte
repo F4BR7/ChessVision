@@ -101,14 +101,14 @@
               <div class="font-semibold">Nivel {level}</div>
               <div class="text-sm opacity-75">
                 {level === 1
-                  ? 'Principiante'
+                  ? 'Principiante (~500 Elo)'
                   : level === 2
-                    ? 'Intermedio'
-                    : level === 3
-                      ? 'Avanzado'
-                      : level === 4
-                        ? 'Experto'
-                        : 'Maestro'}
+                  ? 'Aficionado (~900 Elo)'
+                  : level === 3
+                  ? 'Intermedio (~1400 Elo)'
+                  : level === 4
+                  ? 'Experto (~2200 Elo)'
+                  : 'Maestro (~3000 Elo)'}  
               </div>
             </button>
           {/each}
@@ -125,16 +125,30 @@
   </div>
 {:else}
   <!-- Game Board -->
-  <div class="flex flex-wrap justify-center my-6 md:my-16 gap-6 px-4">
-    <div class="size-4/5 md:size-3/5 lg:size-5/12 flex gap-x-4">
-      <EvaluationBar evaluation={{ score: 0, type: 'cp', pv: '', label: Label.UNDEFINED }} />
-      <div class="grow">
-        <Chessboard />
-      </div>
-    </div>
+<div class="mx-auto my-6 md:my-10 max-w-[1285px] px-4">
+  <div class="flex justify-center gap-8 items-start">
 
+  <EvaluationBar evaluation={{ score: 0, type: 'cp', pv: '', label: Label.UNDEFINED }} />
+
+  <div class="flex-1">
+
+<div class="mb-3 flex items-center gap-2 px-2 text-xl font-bold text-white">
+  ♟️ <span> {  difficulty === 1 ? 'Stockfish Principiante (~500 Elo)' :
+  difficulty === 2 ? 'Stockfish Aficionado (~900 Elo)' :
+  difficulty === 3 ? 'Stockfish Intermedio (~1400 Elo)' :
+  difficulty === 4 ? 'Stockfish Experto (~2200 Elo)' :
+  'Stockfish Maestro (~3000 Elo)'}</span>
+</div>
+
+<Chessboard />
+
+<div class="mt-3 flex items-center gap-2 px-2 text-xl font-bold text-white">
+  👤 <span>Tú</span>
+</div>
+
+</div>
     <!-- Game Controls -->
-    <div class="w-4/5 md:w-1/4">
+    <div class="w-[420px] shrink-0">
       <div class="card p-6 bg-surface-800 border border-surface-700 space-y-4">
         <h2 class="h2 text-white">Juego</h2>
         <div class="space-y-2">
@@ -159,4 +173,5 @@
       </div>
     </div>
   </div>
+</div>
 {/if}
