@@ -22,6 +22,6 @@
     />
     <span class="w-8 text-right text-primary-700">{progress}%</span>
   {:else}
-    🚀 Analizar
+    🚀 Revisar
   {/if}
 </button>

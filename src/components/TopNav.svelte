@@ -30,14 +30,6 @@
         🎮 Jugar IA
       </a>
       <a
-        href="/analysis"
-        class="px-4 py-2 rounded-lg transition {$page.url.pathname === '/analysis'
-          ? 'bg-primary-600 text-white'
-          : 'text-surface-300 hover:bg-surface-800'}"
-      >
-        📊 Analizar
-      </a>
-      <a
         href="/review"
         class="px-4 py-2 rounded-lg transition {$page.url.pathname === '/review'
           ? 'bg-primary-600 text-white'

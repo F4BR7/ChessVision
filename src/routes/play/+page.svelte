@@ -31,6 +31,13 @@
 
   const saveGame = () => {
     if (saved || $history.length === 0) return;
+    chess.header(
+      'Event', `IA Nivel ${difficulty}`,
+      'Site', 'ChessVision',
+      'Date', new Date().toISOString().slice(0, 10).replace(/-/g, '.'),
+      'White', 'Tú',
+      'Black', `Stockfish (Nivel ${difficulty})`
+    );
     const record = buildGameRecord(chess, $history, {
       type: 'AI',
       difficulty,
@@ -38,6 +45,7 @@
     });
     record.white = 'Tú';
     record.black = `Stockfish (Nivel ${difficulty})`;
+    console.log(record);  
     games.addGame(record);
     saved = true;
   };

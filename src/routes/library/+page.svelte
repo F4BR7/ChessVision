@@ -93,7 +93,7 @@
 
   const analyzeGame = (game: GameRecord) => {
     setPendingPgn(game.pgn);
-    goto('/analysis');
+    goto('/review');
   };
 
   const deleteGame = (game: GameRecord) => {
@@ -289,7 +289,7 @@
             class="btn variant-filled-primary"
             on:click={() => selectedGame && analyzeGame(selectedGame)}
           >
-            🔍 Analizar
+            🔍 Revisar
           </button>
           <button
             class="btn variant-ghost-surface"

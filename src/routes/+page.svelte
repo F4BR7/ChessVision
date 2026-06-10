@@ -20,16 +20,7 @@
     >
       <div class="text-5xl mb-4">🎮</div>
       <h2 class="h2 mb-2">Jugar vs IA</h2>
-      <p class="text-surface-200">Selecciona dificultad y juega contra Stockfish</p>
-    </a>
-
-    <a
-      href="/analysis"
-      class="card p-8 bg-gradient-to-br from-accent-600 to-accent-700 hover:from-accent-500 hover:to-accent-600 text-white cursor-pointer transition transform hover:scale-105"
-    >
-      <div class="text-5xl mb-4">📊</div>
-      <h2 class="h2 mb-2">Analizar</h2>
-      <p class="text-surface-200">Carga PGN y analiza con Stockfish</p>
+      <p class="text-surface-200">Selecciona dificultad y juega contra la mejor IA</p>
     </a>
 
     <a
