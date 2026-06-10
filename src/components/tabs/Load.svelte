@@ -17,6 +17,16 @@
   let loader: string = initialPgn ? 'pgn' : 'chesscom';
   let strPgn: string = initialPgn;
 
+  // `initialPgn` is set by the parent in its onMount (after this child has been
+  // created), so sync once when it first becomes available without clobbering
+  // any edits the user makes afterwards.
+  let pgnInitialized = Boolean(initialPgn);
+  $: if (initialPgn && !pgnInitialized) {
+    strPgn = initialPgn;
+    loader = 'pgn';
+    pgnInitialized = true;
+  }
+
   // PGN fields
   let disabledImportPgn: boolean = false;
   let filename: string = '';
