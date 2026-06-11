@@ -1,7 +1,6 @@
 <script lang="ts">
   import { games } from '$lib/games';
   import { goto } from '$app/navigation';
-  import { setSelectedLibraryGame } from '$lib/library';
 
 </script>
 

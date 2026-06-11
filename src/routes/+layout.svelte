@@ -3,6 +3,7 @@
   import '../app.postcss';
   import 'cm-chessboard/assets/chessboard.css';
 
+
   import { initializeStores, Modal, type ModalComponent } from '@skeletonlabs/skeleton';
   import EngineHelp from '../components/tabs/modals/EngineHelp.svelte';
   import ChessComGameSelection from '../components/tabs/modals/ChessComGameSelection.svelte';
@@ -25,6 +26,7 @@
     PUBLIC_SENTRY_ORG,
     PUBLIC_SENTRY_PROJECT_ID
   } from '$env/static/public';
+
 
   initializeStores();
 
@@ -91,7 +93,7 @@
       });
     }
 
-    // Initialize engine
+    // Initialize enginees
     if (browser) {
       const unsubscribe = settingsEngine.subscribe((eng) => {
         init(eng).then((worker) => engine.set(worker));

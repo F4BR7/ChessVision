@@ -137,6 +137,9 @@
     }
   };
 
+  import { page } from '$app/state';
+  const isReviewPage = page.url.pathname === '/review';
+  
   onMount(async () => {
     board = new Chessboard(boardElement, {
       position: DEFAULT_POSITION,
@@ -156,11 +159,16 @@
 
     // Enable move input after board initialization
     board.enableMoveInput((event) => {
+      const squareFrom = event.squareFrom;
+      const piece = board.getPiece(squareFrom);
+      const currentTurn = chess.turn(); // 'w' or 'b'
+      const pieceColor = piece?.[0]; // 'w' or 'b'
+      
+      if (isReviewPage) {
+        return false;
+      }
+
       if (event.type === INPUT_EVENT_TYPE.moveInputStarted) {
-        const squareFrom = event.squareFrom;
-        const piece = board.getPiece(squareFrom);
-        const currentTurn = chess.turn(); // 'w' or 'b'
-        const pieceColor = piece?.[0]; // 'w' or 'b'
 
         console.log(`--- MOVE INPUT STARTED ---`);
         console.log(`Current turn: ${currentTurn === 'w' ? 'White' : 'Black'}`);
