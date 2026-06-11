@@ -191,30 +191,84 @@ $: if (gameState === 'playing' && $position) {
 
 </div>
     <!-- Game Controls -->
-    <div class="w-[420px] shrink-0">
-      <div class="card p-6 bg-surface-800 border border-surface-700 space-y-4">
-        <h2 class="h2 text-white">Juego</h2>
-        <div class="space-y-2">
-          <div class="text-sm text-surface-400">
-            Nivel: <span class="text-primary-400 font-bold">Nivel {difficulty}</span>
-          </div>
+<div class="w-[420px] shrink-0 pt-12">
+  <div class="card pt-4 pb-6 px-6 bg-surface-800 border border-surface-700 min-h-[720px] flex flex-col">
+
+
+    <div>
+      <h2 class="h2 text-white mb-6">Juego</h2>
+
+      <div class="rounded-lg bg-surface-700/40 p-3 mb-5">
+        <div class="text-surface-400">
+          Nivel:
+          <span class="text-primary-400 font-bold">Nivel {difficulty}</span>
         </div>
 
-        {#if gameOver}
-          <div class="card p-4 bg-surface-700 border border-primary-600 text-center">
-            <div class="font-bold text-white mb-1">{resultText()}</div>
-            <div class="text-xs text-surface-400">Guardada en la Biblioteca</div>
-          </div>
-        {/if}
-
-        <button on:click={handleNewGame} class="w-full btn variant-filled-surface py-3">
-          Nueva Partida
-        </button>
-        <a href="/library" class="block w-full btn variant-ghost-primary py-3 text-center">
-          Ver Biblioteca
-        </a>
+        <div class="mt-1 text-surface-400">
+          Turno:
+          <span class="text-white font-medium">Blancas</span>
+        </div>
       </div>
     </div>
+
+    {#if gameOver}
+      <div class="card p-4 bg-surface-700 border border-primary-600 text-center">
+        <div class="font-bold text-white mb-1">{resultText()}</div>
+        <div class="text-xs text-surface-400">
+          Guardada en la Biblioteca
+        </div>
+      </div>
+    {/if}
+
+    <div class="space-y-3">
+      <button
+        on:click={handleNewGame}
+        class="w-full btn variant-filled-primary py-3"
+      >
+        🎮 Nueva Partida
+      </button>
+
+      <button
+        class="w-full btn variant-filled-surface py-3"
+      >
+        🔄 Reiniciar
+      </button>
+
+      <button
+        class="w-full btn variant-filled-surface py-3"
+      >
+        🔃 Voltear tablero
+      </button>
+    </div>
+
+    <div class=" border-surface-700 pt-4 space-y-3">
+      <label class="flex items-center justify-between rounded-xl border border-surface-700 px-4 py-3 hover:bg-surface-700 transition cursor-pointer">
+        <span class="font-medium">Calidad de jugada</span>
+        <input type="checkbox" class="slider" />
+      </label>
+
+      <label class="flex items-center justify-between rounded-xl border border-surface-700 px-4 py-3 hover:bg-surface-700 transition cursor-pointer">
+        <span class="font-medium">Pistas</span>
+        <input type="checkbox" class="slider" />
+      </label>
+    </div>
+
+    <div class="mt-auto border-t border-surface-700 pt-4">
+      <div class="text-sm font-semibold text-surface-300 mb-3">
+        Últimas jugadas
+      </div>
+
+      <div class="space-y-2 text-sm text-surface-400">
+        <div>1. e4 &nbsp;&nbsp;&nbsp; Nf6</div>
+        <div>2. f3 &nbsp;&nbsp;&nbsp; d5</div>
+        <div>3. Nc3 &nbsp;&nbsp;&nbsp; e6</div>
+      </div>
+    </div>
+
   </div>
+</div>
+
+  </div>      
+
 </div>
 {/if}
