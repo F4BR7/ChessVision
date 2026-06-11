@@ -10,6 +10,15 @@ export function setPendingPgn(pgn: string): void {
   sessionStorage.setItem(PENDING_PGN_KEY, pgn);
 }
 
+import { writable } from 'svelte/store';
+import type { GameRecord } from '$lib/games';
+
+export const selectedLibraryGame = writable<GameRecord | null>(null);
+
+export function setSelectedLibraryGame(game: GameRecord) {
+    selectedLibraryGame.set(game);
+}
+
 export function consumePendingPgn(): string | null {
   if (typeof sessionStorage === 'undefined') return null;
   const pgn = sessionStorage.getItem(PENDING_PGN_KEY);

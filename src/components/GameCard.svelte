@@ -4,33 +4,73 @@
   export let date: Date = new Date();
   export let precision: number | undefined = undefined;
 
-  function formatDate(d: Date): string {
-    const now = new Date();
-    const diff = now.getTime() - d.getTime();
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(diff / 86400000);
+  export let white: string | undefined = undefined;
+  export let black: string | undefined = undefined;
+  export let opening: string | undefined = undefined;
 
-    if (minutes < 1) return 'ahora';
-    if (minutes < 60) return `hace ${minutes}m`;
-    if (hours < 24) return `hace ${hours}h`;
-    if (days < 7) return `hace ${days}d`;
-    return d.toLocaleDateString();
+  function formatDate(d: Date): string {
+    return d.toLocaleDateString('es-PY');
   }
 
-  function getTypeLabel(t: string, level?: number): string {
-    if (t === 'AI') return `vs IA Nivel ${level || 1}`;
-    if (t === 'PGN') return 'PGN Analizado';
-    return 'Partida Live';
+  function getTitle(): string {
+    if (white && black) {
+      return `${white} vs ${black}`;
+    }
+
+    if (type === 'AI') {
+      return `Jugador vs IA Nivel ${difficulty || 1}`;
+    }
+
+    return 'Jugador vs Jugador';
+  }
+
+  function getCategory(): string {
+    if (type === 'AI') return 'Partida IA';
+    if (type === 'PGN') return 'Importada';
+    if (type === 'Online') return 'Revisión Online';
+    if (type === 'Live') return 'Partida Live';
+
+    return 'Partida';
   }
 </script>
 
-<div class="card p-4 bg-surface-800 border border-surface-700 hover:border-primary-500 cursor-pointer transition">
-  <div class="flex items-start justify-between mb-2">
-    <div class="font-semibold text-white">{getTypeLabel(type, difficulty)}</div>
-    <div class="text-xs text-surface-400">{formatDate(date)}</div>
+<div
+  class="card p-4 bg-surface-800 border border-surface-700 hover:border-primary-500 cursor-pointer transition"
+>
+  <div class="flex justify-between items-start gap-3">
+    <div>
+      <h3 class="font-semibold text-white text-base">
+        {getTitle()}
+      </h3>
+
+      <p class="text-sm text-surface-400 mt-1">
+        {getCategory()}
+      </p>
+
+      <p class="text-sm text-surface-500">
+        {formatDate(date)}
+      </p>
+
+      {#if opening}
+        <p class="text-sm text-primary-300 mt-2">
+          ♟ {opening}
+        </p>
+      {/if}
+    </div>
+
+    {#if precision !== undefined}
+      <div class="text-right">
+        <div class="text-primary-400 font-bold">
+          {precision}%
+        </div>
+        <div class="text-xs text-surface-500">
+          Precisión
+        </div>
+      </div>
+    {:else}
+      <div class="text-xs text-surface-500">
+        Sin revisar
+      </div>
+    {/if}
   </div>
-  {#if precision !== undefined}
-    <div class="text-sm text-surface-400">Precisión: <span class="text-primary-400 font-semibold">{precision}%</span></div>
-  {/if}
 </div>

@@ -8,14 +8,42 @@
   import { buildGameRecord } from '$lib/pgn';
   import type { Evaluation } from '$models/Evaluation';
   import Label from '$models/Label';
+  import { beforeNavigate } from '$app/navigation';
+  import { onDestroy } from 'svelte';
 
   let gameState: 'selector' | 'playing' = 'selector';
   let difficulty = 3;
   let saved = false;
   let gameOver = false;
+  let gameInProgress = false;
+ 
+  beforeNavigate((navigation) => {
+    if (!gameInProgress) return;
+
+    const confirmed = confirm(
+        'Tienes una partida en curso. ¿Seguro que quieres abandonarla?'
+    );
+
+    if (!confirmed) {
+        navigation.cancel();
+    }
+});
+
+  onDestroy(() => {
+    chess = new Chess();
+
+  });
+
+
+  beforeNavigate((nav) => {
+    if (!gameInProgress) return;
+    
+    const leave = confirm('Tienes una partida en curso. Si sales, se perderá el progreso.');
+    if (!leave) nav.cancel();
+  });
 
   const playDifficulty: Writable<number> = getContext('playDifficulty');
-  const chess: Chess = getContext('chess');
+  let chess: Chess = getContext('chess');
   const position: Writable<string> = getContext('position');
   const history: Writable<Move[]> = getContext('history');
   const move: Writable<number> = getContext('move');
@@ -54,21 +82,36 @@
     resetBoard();
     saved = false;
     gameOver = false;
+    gameInProgress = true;
     playDifficulty.set(difficulty);
     gameState = 'playing';
   };
 
   const handleNewGame = () => {
     // Persist the current game (if any) before leaving the board.
+    if (
+        gameInProgress &&
+        !confirm(
+            '¿Seguro que quieres iniciar una nueva partida?\n\nSe perderá la partida actual.'
+        )
+    ) {
+        return;
+    }
+
     saveGame();
+    gameInProgress = false;
     gameState = 'selector';
   };
 
   // Detect the end of the game whenever the position changes.
-  $: if (gameState === 'playing' && $position) {
+$: if (gameState === 'playing' && $position) {
     gameOver = chess.isGameOver();
-    if (gameOver) saveGame();
-  }
+
+    if (gameOver) {
+        gameInProgress = false;
+        saveGame();
+    }
+}
 
   const resultText = (): string => {
     if (chess.isCheckmate())
