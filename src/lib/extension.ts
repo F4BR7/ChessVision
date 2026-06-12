@@ -16,7 +16,10 @@ export class EvaluationMarkerExtension extends Extension {
 
     chessboard.setMarkers = this.setMarkers.bind(this);
 
-    this.registerExtensionPoint(EXTENSION_POINT.afterRedrawBoard, this.drawMarkers);
+    this.registerExtensionPoint(
+      EXTENSION_POINT.afterRedrawBoard,
+      this.drawMarkers.bind(this)
+    );
   }
 
   setMarkers(markers: Marker[]) {
@@ -25,6 +28,8 @@ export class EvaluationMarkerExtension extends Extension {
   }
 
   drawMarkers() {
+    console.log('DRAW MARKERS');
+
     const beforePieceLayer: Document = this?.chessboard?.view?.markersLayer;
     const afterPieceLayer: Document = this?.chessboard?.view?.markersTopLayer;
     const width = this?.chessboard?.view?.squareWidth;
@@ -38,8 +43,15 @@ export class EvaluationMarkerExtension extends Extension {
       const rect = document.createElementNS(SVG_NAMESPACE, 'rect');
       rect.setAttribute('x', point.x);
       rect.setAttribute('y', point.y);
-      rect.setAttribute('fill', getLabelHexColor(marker.label));
-      rect.setAttribute('fill-opacity', '50%');
+      if (marker.label === 'SELECTED') {
+        rect.setAttribute('fill-opacity', '0.20');
+        rect.setAttribute('fill', '#22c55e');
+      } else {
+        rect.setAttribute('fill', 'none');
+        rect.setAttribute('stroke', '#22c55e');
+        rect.setAttribute('stroke-width', '3');
+        rect.setAttribute('stroke-opacity', '0.7');
+      }
       rect.setAttribute('width', width);
       rect.setAttribute('height', height);
       overlays.push(rect);
@@ -51,6 +63,7 @@ export class EvaluationMarkerExtension extends Extension {
         const circle = document.createElementNS(SVG_NAMESPACE, 'circle');
         circle.setAttribute('r', width / 4);
         circle.setAttribute('cx', point.x + width);
+        
         circle.setAttribute('cy', point.y);
         circle.setAttribute('fill', getLabelHexColor(marker.label));
 

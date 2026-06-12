@@ -31,7 +31,10 @@ export function getLabelClassColor(label: Label): string {
   }
 }
 
-export function getLabelHexColor(label: Label): string {
+export function getLabelHexColor(label: Label | string): string {
+  if (label === 'LEGAL') {
+    return '#22c55e';
+  }
   switch (label) {
     case Label.BRILLIANT:
       return '#2dd4bf';

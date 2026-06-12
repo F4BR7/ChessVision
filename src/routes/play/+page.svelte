@@ -16,6 +16,7 @@
   let saved = false;
   let gameOver = false;
   let gameInProgress = false;
+  let chessboardRef;
  
   beforeNavigate((navigation) => {
     if (!gameInProgress) return;
@@ -48,6 +49,25 @@
   const history: Writable<Move[]> = getContext('history');
   const move: Writable<number> = getContext('move');
   const evaluations: Writable<Evaluation[]> = getContext('evaluations');
+  
+  const settings = getContext('settings');
+
+  let showHints = false;
+  let showMoveQuality = false;
+
+  function flipBoard() {
+    settings.update((s) => ({
+      ...s,
+      orientation: s.orientation === 'w' ? 'b' : 'w'
+    }));
+  }
+
+  function restartGame() {
+    resetBoard();
+    saved = false;
+    gameOver = false;
+  }
+  
 
   const resetBoard = () => {
     chess.reset();
@@ -183,7 +203,11 @@ $: if (gameState === 'playing' && $position) {
   'Stockfish Maestro (~3000 Elo)'}</span>
 </div>
 
-<Chessboard />
+<Chessboard
+  bind:this={chessboardRef}
+  {showHints}
+  {showMoveQuality}
+/>
 
 <div class="mt-3 flex items-center gap-2 px-2 text-xl font-bold text-white">
   👤 <span>Tú</span>
@@ -229,27 +253,29 @@ $: if (gameState === 'playing' && $position) {
       </button>
 
       <button
+        on:click={restartGame}
         class="w-full btn variant-filled-surface py-3"
       >
         🔄 Reiniciar
       </button>
 
       <button
-        class="w-full btn variant-filled-surface py-3"
-      >
-        🔃 Voltear tablero
+  on:click={flipBoard}
+  class="w-full btn variant-filled-surface py-3"
+>
+  🔃 Voltear tablero
       </button>
     </div>
 
     <div class=" border-surface-700 pt-4 space-y-3">
       <label class="flex items-center justify-between rounded-xl border border-surface-700 px-4 py-3 hover:bg-surface-700 transition cursor-pointer">
         <span class="font-medium">Calidad de jugada</span>
-        <input type="checkbox" class="slider" />
+        <input bind:checked={showMoveQuality} type="checkbox" class="slider" />
       </label>
 
       <label class="flex items-center justify-between rounded-xl border border-surface-700 px-4 py-3 hover:bg-surface-700 transition cursor-pointer">
         <span class="font-medium">Pistas</span>
-        <input type="checkbox" class="slider" />
+        <input bind:checked={showHints}  type="checkbox" class="slider" />
       </label>
     </div>
 

@@ -2,7 +2,8 @@
   // @ts-expect-error: no declaration file as it was written in JS
   import { Chessboard, INPUT_EVENT_TYPE } from 'cm-chessboard/src/Chessboard';
   import { DEFAULT_POSITION, type Move } from 'chess.js';
-
+  // @ts-ignore
+  import { Markers, MARKER_TYPE } from 'cm-chessboard/src/extensions/markers/Markers.js';
   import { getContext, onMount } from 'svelte';
   import { derived, type Writable, type Readable } from 'svelte/store';
   import type { Evaluation } from '$models/Evaluation';
@@ -15,8 +16,25 @@
 
   let boardElement: HTMLDivElement;
 
+  let selectedSquare = '';
+
+const LEGAL_MOVE_MARKER = {
+  label: 'BEST',
+  showIcon: false
+};
+
   let board: Chessboard;
   let aiThinking = false;
+  export let showMoveQuality = false;
+  export let showHints = false;
+
+  /*$: if (showHints && board) {
+    showHint();
+  }
+  
+  $: if (!showHints && board) {
+    board.setMarkers([]);
+  }*/
 
   const position: Writable<string> = getContext('position');
   const evaluation: Writable<Evaluation> = getContext('evaluation');
@@ -60,6 +78,24 @@
       to: move.substring(2, 4)
     };
   };
+
+  const showHint = async () => {
+  const engineWorker = $engine;
+
+  if (!engineWorker) return;
+
+  const result = await evaluate(engineWorker, chess.fen(), 12);
+
+  console.log('HINT RESULT:', result);
+
+  const bestMove = getFirstMoveFromPv(result.pv);
+
+  console.log('BEST MOVE:', bestMove);
+
+  if (!bestMove) return;
+
+  alert(`Mejor jugada: ${bestMove}`);
+};
 
   // Make Stockfish move
   const makeStockfishMove = async () => {
@@ -127,6 +163,37 @@
         position.set(chess.fen());
         history.set(chess.history({ verbose: true }));
         move.set(-1);
+
+        if (showHints) {
+          setTimeout(() => {
+            showHint();
+          }, 300);
+        }
+
+        if (showMoveQuality) {
+          const engineWorker = $engine;
+  
+          if (engineWorker) {
+            const result = await evaluate(
+              engineWorker,
+              chess.fen(),
+              12
+            );
+          
+            const bestMove = getFirstMoveFromPv(result.pv);
+          
+            if (bestMove) {
+              const played = moveResult.from + moveResult.to;
+            
+              if (played === bestMove.substring(0, 4)) {
+                console.log('⭐ BEST MOVE');
+              } else {
+                console.log('⚠️ NOT BEST MOVE');
+              }
+            }
+          }
+        }
+
       } else {
         console.error(`Stockfish move validation failed: ${moveCoords.from}→${moveCoords.to}`);
       }
@@ -142,6 +209,7 @@
   
   onMount(async () => {
     board = new Chessboard(boardElement, {
+      
       position: DEFAULT_POSITION,
       assetsUrl: '/',
       animationDuration: 50,
@@ -153,6 +221,13 @@
       extensions: [
         {
           class: EvaluationMarkerExtension
+        },
+        {
+          class: Markers,
+          props: {
+            autoMarkers: null,
+            sprite: '/markers.svg'
+          }
         }
       ]
     });
@@ -167,27 +242,42 @@
       if (isReviewPage) {
         return false;
       }
-
+  
+       
       if (event.type === INPUT_EVENT_TYPE.moveInputStarted) {
-
-        console.log(`--- MOVE INPUT STARTED ---`);
-        console.log(`Current turn: ${currentTurn === 'w' ? 'White' : 'Black'}`);
-        console.log(`Selected piece: ${piece} at ${squareFrom}`);
-
-        // Only allow if piece color matches current turn
-        if (!piece) {
-          console.log(`Rejected: No piece at ${squareFrom}`);
-          return false;
+        
+          if (!piece) {
+            console.log(`Rejected: No piece at ${squareFrom}`);
+            return false;
+          }
+        
+          if (pieceColor !== currentTurn) {
+            console.log(`Rejected: Wrong side to move`);
+            return false;
+          }
+        
+          const legalMoves = chess.moves({
+            square: squareFrom,
+            verbose: true
+          });
+          
+          board.setMarkers([
+            {
+              square: squareFrom,
+              label: 'SELECTED',
+              showIcon: false
+            },
+              ...legalMoves.map((move) => ({
+                square: move.to,
+                label: 'LEGAL',
+                showIcon: false
+              }))
+            ]);
+          
+          // PRUEBA VISUAL
+          console.log(`Accepted: Piece can be moved`);
+          return true;
         }
-
-        if (pieceColor !== currentTurn) {
-          console.log(`Rejected: Wrong side to move (${pieceColor === 'w' ? 'White' : 'Black'} piece, but ${currentTurn === 'w' ? 'White' : 'Black'}'s turn)`);
-          return false;
-        }
-
-        console.log(`Accepted: Piece can be moved`);
-        return true;
-      }
 
       if (event.type === INPUT_EVENT_TYPE.validateMoveInput) {
         const squareFrom = event.squareFrom;
@@ -249,11 +339,11 @@
       }
 
       if (event.type === INPUT_EVENT_TYPE.moveInputCanceled) {
-        console.log(`Move input canceled`);
+        board.setMarkers([]);
       }
 
       if (event.type === INPUT_EVENT_TYPE.moveInputFinished) {
-        console.log(`Move input finished`);
+        board.setMarkers([]);
       }
     });
 
@@ -266,7 +356,7 @@
     board?.setMarkers([]);
   });
   $: board?.setPosition($position, true);
-  $: {
+  /*$: {
     if ($history.length > 0 && $move >= 0) {
       playMoveTypeSound(getMoveType($history[$move].san));
       board?.setMarkers([
@@ -285,6 +375,9 @@
       board?.setMarkers([]);
     }
   }
+*/
+export { showHint };
+
 </script>
 
 <div class="w-full" bind:this={boardElement}></div>
