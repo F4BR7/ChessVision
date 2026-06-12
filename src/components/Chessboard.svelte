@@ -3,7 +3,7 @@
   import { Chessboard, INPUT_EVENT_TYPE } from 'cm-chessboard/src/Chessboard';
   import { DEFAULT_POSITION, type Move } from 'chess.js';
   // @ts-ignore
-  import { Markers, MARKER_TYPE } from 'cm-chessboard/src/extensions/markers/Markers.js';
+  import { Markers} from 'cm-chessboard/src/extensions/markers/Markers.js';
   import { getContext, onMount } from 'svelte';
   import { derived, type Writable, type Readable } from 'svelte/store';
   import type { Evaluation } from '$models/Evaluation';
@@ -16,25 +16,18 @@
 
   let boardElement: HTMLDivElement;
 
-  let selectedSquare = '';
-
-const LEGAL_MOVE_MARKER = {
-  label: 'BEST',
-  showIcon: false
-};
-
   let board: Chessboard;
   let aiThinking = false;
   export let showMoveQuality = false;
   export let showHints = false;
 
-  /*$: if (showHints && board) {
+  $: if (showHints && board) {
     showHint();
   }
   
   $: if (!showHints && board) {
     board.setMarkers([]);
-  }*/
+  }
 
   const position: Writable<string> = getContext('position');
   const evaluation: Writable<Evaluation> = getContext('evaluation');
@@ -46,11 +39,14 @@ const LEGAL_MOVE_MARKER = {
   const playDifficulty: Writable<number> = getContext('playDifficulty');
   const orientation = derived(settings, ($settings) => $settings.orientation);
 
+
   // DEBUG: Log context values at initialization
-  console.log(`--- CHESSBOARD INIT DEBUG ---`);
-  console.log(`playDifficulty value:`, playDifficulty);
-  console.log(`typeof playDifficulty:`, typeof playDifficulty);
-  console.log(`playDifficulty === undefined:`, playDifficulty === undefined);
+    console.log(`--- CHESSBOARD INIT DEBUG ---`);
+    console.log(`playDifficulty value:`, playDifficulty);
+    console.log(`typeof playDifficulty:`, typeof playDifficulty);
+    console.log(`playDifficulty === undefined:`, playDifficulty === undefined);
+
+
 
   // Map difficulty level to Stockfish depth
   const getDifficultyDepth = (difficulty: number): number => {
@@ -100,6 +96,7 @@ const LEGAL_MOVE_MARKER = {
   // Make Stockfish move
   const makeStockfishMove = async () => {
     if (!playDifficulty || aiThinking) return;
+
 
     aiThinking = true;
     let difficulty = 15;
@@ -155,9 +152,19 @@ const LEGAL_MOVE_MARKER = {
         to: moveCoords.to
       });
 
+
+
       if (moveResult) {
-        console.log(`Accepted: ${moveResult.san}`);
-        console.log(`New turn: ${chess.turn() === 'w' ? 'White' : 'Black'}`);
+
+        // ----------------------------------------------------
+        // Reproducir sonido según el tipo de movimiento
+        playMoveTypeSound(getMoveType(moveResult.san));
+        setTimeout(() => {
+        playMoveTypeSound(getMoveType(moveResult.san));
+    }, 0);
+
+    console.log(`PLAYER MOVE: ${moveResult.san}`);
+
 
         // Update stores
         position.set(chess.fen());
@@ -206,6 +213,11 @@ const LEGAL_MOVE_MARKER = {
 
   import { page } from '$app/state';
   const isReviewPage = page.url.pathname === '/review';
+
+
+// ====================================================
+// INICIALIZACIÓN DEL TABLERO
+// ====================================================
   
   onMount(async () => {
     board = new Chessboard(boardElement, {
@@ -356,7 +368,7 @@ const LEGAL_MOVE_MARKER = {
     board?.setMarkers([]);
   });
   $: board?.setPosition($position, true);
-  /*$: {
+  $: {
     if ($history.length > 0 && $move >= 0) {
       playMoveTypeSound(getMoveType($history[$move].san));
       board?.setMarkers([
@@ -375,7 +387,6 @@ const LEGAL_MOVE_MARKER = {
       board?.setMarkers([]);
     }
   }
-*/
 export { showHint };
 
 </script>

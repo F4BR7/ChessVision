@@ -1,21 +1,43 @@
 <script lang="ts">
   import { games } from '$lib/games';
-  import { computeStatistics, computeOpeningStats } from '$lib/stats';
+  import { computeStatistics, computeOpeningStats, getWins, getLosses, getDraws } from '$lib/stats';
   import StatsCard from '../../components/StatsCard.svelte';
+  import {getWinRate, getBestAccuracy, getWorstAccuracy, getFavoriteOpening} from '$lib/stats';
 
   // NOTE: This page is the foundation for the upcoming Statistics module.
   // It consumes the pure helpers in `$lib/stats` so future visualizations
   // (rating progression, accuracy trends, per-opening performance) can be
   // layered on top without touching data-aggregation logic.
-  $: stats = computeStatistics($games);
-  $: openingStats = computeOpeningStats($games).slice(0, 5);
-  $: recent = $games.slice(0, 5);
+  $: aiGames = $games.filter((g) => g.type === 'AI');
+
+  $: winRate = getWinRate(aiGames);
+  
+  $: bestAccuracy = getBestAccuracy(aiGames);
+  
+  $: worstAccuracy = getWorstAccuracy(aiGames);
+  
+  $: favoriteOpening = getFavoriteOpening(aiGames);
+
+  // Resultados del jugador
+  $: wins = getWins(aiGames);
+  
+  $: losses = getLosses(aiGames);
+  
+  $: draws = getDraws(aiGames);
+  
+  $: stats = computeStatistics(aiGames);
+
+  $: openingStats = computeOpeningStats(aiGames);
+
+  $: recent = aiGames.slice(0, 5);
   $: recentAccuracy = (() => {
     const values = recent.map((g) => g.accuracy).filter((a): a is number => typeof a === 'number');
     return values.length ? Math.round(values.reduce((a, b) => a + b, 0) / values.length) : 0;
   })();
   $: recentMistakes = recent.reduce((sum, g) => sum + (g.mistakes ?? 0), 0);
   $: recentBlunders = recent.reduce((sum, g) => sum + (g.blunders ?? 0), 0);
+
+  
 </script>
 
 <div class="max-w-7xl mx-auto px-4 py-8">
@@ -50,6 +72,50 @@
     </div>
   </div>
 
+  <!-- ================================================== -->
+<!-- ESTADÍSTICAS AVANZADAS -->
+<!-- ================================================== -->
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+
+  <div class="card p-6 bg-surface-800 border border-surface-700">
+    <div class="text-4xl font-bold text-success-400 mb-2">
+      {winRate}%
+    </div>
+    <div class="text-surface-300">
+      Win Rate
+    </div>
+  </div>
+
+  <div class="card p-6 bg-surface-800 border border-surface-700">
+    <div class="text-4xl font-bold text-primary-400 mb-2">
+      {bestAccuracy}%
+    </div>
+    <div class="text-surface-300">
+      Mejor Accuracy
+    </div>
+  </div>
+
+  <div class="card p-6 bg-surface-800 border border-surface-700">
+    <div class="text-4xl font-bold text-warning-400 mb-2">
+      {worstAccuracy}%
+    </div>
+    <div class="text-surface-300">
+      Peor Accuracy
+    </div>
+  </div>
+
+  <div class="card p-6 bg-surface-800 border border-surface-700">
+    <div class="text-xl font-bold text-white mb-2 truncate">
+      {favoriteOpening}
+    </div>
+    <div class="text-surface-300">
+      Apertura Favorita
+    </div>
+  </div>
+
+</div>
+
   <!-- Games by Type / Result -->
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
     <div class="card p-6 bg-surface-800 border border-surface-700">
@@ -74,16 +140,16 @@
       <h2 class="h2 mb-6 text-white">Resultados</h2>
       <div class="space-y-4">
         <div class="flex items-center justify-between p-3 bg-surface-700 rounded">
-          <span class="text-surface-300">Ganan Blancas</span>
-          <span class="text-white font-bold text-xl">{stats.byResult['1-0']}</span>
+          <span class="text-surface-300">Victorias</span>
+          <span class="text-white font-bold text-xl">{wins}</span>
         </div>
         <div class="flex items-center justify-between p-3 bg-surface-700 rounded">
-          <span class="text-surface-300">Ganan Negras</span>
-          <span class="text-white font-bold text-xl">{stats.byResult['0-1']}</span>
+          <span class="text-surface-300">Derrotas</span>
+          <span class="text-white font-bold text-xl">{losses}</span>
         </div>
         <div class="flex items-center justify-between p-3 bg-surface-700 rounded">
           <span class="text-surface-300">Tablas</span>
-          <span class="text-white font-bold text-xl">{stats.byResult['1/2-1/2']}</span>
+          <span class="text-white font-bold text-xl">{draws}</span>
         </div>
       </div>
     </div>

@@ -8,7 +8,57 @@ import type { GameRecord, GameResult, GameType } from '$lib/games';
  * page is expected to build richer visualizations (rating progression, per
  * opening performance, accuracy trends over time, etc.) on top of these
  * primitives. Keeping the computation here keeps the UI thin and testable.
- */
+ */ 
+
+// Victorias del jugador
+export function getWins(records: GameRecord[]): number {
+  return records.filter(
+    (g) => g.white === 'Tú' && g.result === '1-0'
+  ).length;
+}
+
+// Derrotas del jugador
+export function getLosses(records: GameRecord[]): number {
+  return records.filter(
+    (g) => g.white === 'Tú' && g.result === '0-1'
+  ).length;
+}
+
+// Partidas empatadas
+export function getDraws(records: GameRecord[]): number {
+  return records.filter(
+    (g) => g.result === '1/2-1/2'
+  ).length;
+}
+
+export function getWinRate(records: GameRecord[]): number {
+  if (records.length === 0) return 0;
+
+  const wins = records.filter((g) => g.result === '1-0').length;
+
+  return Math.round((wins / records.length) * 100);
+}
+
+export function getBestAccuracy(records: GameRecord[]): number {
+  const accuracies = records
+    .map((g) => g.accuracy)
+    .filter((a): a is number => typeof a === 'number');
+
+  return accuracies.length ? Math.max(...accuracies) : 0;
+}
+
+export function getWorstAccuracy(records: GameRecord[]): number {
+  const accuracies = records
+    .map((g) => g.accuracy)
+    .filter((a): a is number => typeof a === 'number');
+
+  return accuracies.length ? Math.min(...accuracies) : 0;
+}
+
+export function getFavoriteOpening(records: GameRecord[]): string {
+  const openings = computeOpeningStats(records);
+  return openings[0]?.opening ?? 'Sin datos';
+}
 
 export interface GameStatistics {
   totalGames: number;
@@ -86,3 +136,4 @@ export function computeOpeningStats(records: GameRecord[]): OpeningStat[] {
     }))
     .sort((a, b) => b.count - a.count);
 }
+

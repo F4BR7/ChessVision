@@ -13,6 +13,7 @@ export type GameType = 'AI' | 'PGN' | 'Online' | 'Live';
  * denormalized metadata used for listing, searching, filtering and statistics.
  */
 export interface GameRecord {
+  playerColor?: 'white' | 'black';
   id: string;
   date: Date;
   type: GameType;

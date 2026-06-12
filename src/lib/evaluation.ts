@@ -220,3 +220,35 @@ export function countMistakes(evaluations: Evaluation[]): {
   }
   return { inaccuracies, mistakes, blunders };
 }
+// Errores del jugador
+export function countPlayerMistakes(
+  evaluations: Evaluation[],
+  history: Move[],
+  playerColor: 'white' | 'black'
+): {
+  inaccuracies: number;
+  mistakes: number;
+  blunders: number;
+} {
+  let inaccuracies = 0;
+  let mistakes = 0;
+  let blunders = 0;
+
+  const color = playerColor === 'white' ? 'w' : 'b';
+
+  for (let i = 0; i < evaluations.length && i < history.length; i++) {
+    if (history[i].color !== color) continue;
+
+    const evaluation = evaluations[i];
+
+    if (evaluation.label === Label.INACCURACY) inaccuracies++;
+    else if (evaluation.label === Label.MISTAKE) mistakes++;
+    else if (evaluation.label === Label.BLUNDER) blunders++;
+  }
+
+  return {
+    inaccuracies,
+    mistakes,
+    blunders
+  };
+}

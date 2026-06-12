@@ -15,7 +15,7 @@
   import { page } from '$app/stores';
   import { games } from '$lib/games';
   import { buildGameRecord } from '$lib/pgn';
-  import { computeAccuracy, countMistakes } from '$lib/evaluation';
+  import { computeAccuracy, countMistakes, countPlayerMistakes } from '$lib/evaluation';
   import { consumePendingPgn } from '$lib/library';
 
   let currentTab: string = 'load';
@@ -30,29 +30,92 @@
   let isLoading: boolean = false;
   let progress = 0;
 
-  // Whether the analysis happened from the "Revisar" (online review) route.
+
+// Si el análisis se realizó desde la ruta "Revisar".
   $: isReview = $page.url.pathname.startsWith('/review');
 
   // Persist a finished analysis into the local game library.
-  const saveAnalyzedGame = (pgn: string, report: Evaluation[], moves: Move[]) => {
-    try {
-      const recordChess = new ChessClass();
-      recordChess.loadPgn(pgn);
-      const accuracy = computeAccuracy(report, moves);
-      const { inaccuracies, mistakes, blunders } = countMistakes(report);
-      const record = buildGameRecord(recordChess, recordChess.history({ verbose: true }), {
+const saveAnalyzedGame = (
+  pgn: string,
+  report: Evaluation[],
+  moves: Move[]
+) => {
+  try {
+    const recordChess = new ChessClass();
+    recordChess.loadPgn(pgn);
+
+    // Accuracy general (Online / PGN)
+    const accuracy = computeAccuracy(report, moves);
+
+    // Buscar si corresponde a una partida AI guardada
+    const existingGame = games.all().find(
+      (g) => g.type === 'AI' && g.pgn === pgn
+    );
+
+    // Errores
+    let inaccuracies: number;
+    let mistakes: number;
+    let blunders: number;
+
+    if (existingGame?.playerColor) {
+      // Solo errores del jugador
+      ({
+        inaccuracies,
+        mistakes,
+        blunders
+      } = countPlayerMistakes(
+        report,
+        moves,
+        existingGame.playerColor
+      ));
+    } else {
+      // Online / PGN
+      ({
+        inaccuracies,
+        mistakes,
+        blunders
+      } = countMistakes(report));
+    }
+
+    const record = buildGameRecord(
+      recordChess,
+      recordChess.history({ verbose: true }),
+      {
         type: isReview ? 'Online' : 'PGN',
+
+        // Accuracy global para Online/PGN
         accuracy: accuracy.overall,
+
         inaccuracies,
         mistakes,
         blunders,
-        event: isReview ? 'Revisión online' : 'Análisis'
-      });
+
+        event: isReview
+          ? 'Revisión online'
+          : 'Análisis'
+      }
+    );
+
+    // Actualizar partida AI existente
+    if (existingGame) {
+      existingGame.accuracy =
+        existingGame.playerColor === 'black'
+          ? accuracy.black
+          : accuracy.white;
+
+      existingGame.inaccuracies = inaccuracies;
+      existingGame.mistakes = mistakes;
+      existingGame.blunders = blunders;
+
+      games.updateGame(existingGame);
+    } else {
+      // Guardar análisis Online / PGN
       games.addGame(record);
-    } catch (e) {
-      log(`No se pudo guardar la partida analizada: ${e}`);
     }
-  };
+  } catch (e) {
+    log(`No se pudo guardar la partida analizada: ${e}`);
+  }
+};
 
   onMount(() => {
     const pending = consumePendingPgn();
