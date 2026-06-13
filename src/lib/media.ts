@@ -33,3 +33,7 @@ export function playMoveTypeSound(mt: MoveType) {
       break;
   }
 }
+
+export function playNavigationSound() {
+  playMedia('sfx-navigation');
+}

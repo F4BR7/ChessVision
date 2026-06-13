@@ -114,6 +114,8 @@
     preloadAudio('sfx-check', '/media/check.webm');
     preloadAudio('sfx-promotion', '/media/promotion.webm');
     preloadAudio('sfx-checkmate', '/media/checkmate.webm');
+    
+    preloadAudio('sfx-navigation', '/media/ui-click.wav');
 
     return cleanupEngine;
   });

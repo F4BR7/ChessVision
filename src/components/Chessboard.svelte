@@ -249,6 +249,7 @@
         });
 
         if (moveResult) {
+          playMoveTypeSound(getMoveType(moveResult.san));
           // Update position store with new FEN
           position.set(chess.fen());
           // Update history store
