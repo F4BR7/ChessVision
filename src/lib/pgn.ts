@@ -56,9 +56,6 @@ export function buildGameRecord(
   options: BuildGameOptions
 ): GameRecord {
   const headers = chess.header();
-  console.log('HEADERS:', headers);
-  const rawPgn = chess.pgn();
-  console.log('RAW PGN:', rawPgn);
   const moves = history.map((m) => m.san);
   return {
     id: createGameId(),

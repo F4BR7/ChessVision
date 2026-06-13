@@ -1,7 +1,7 @@
 import { dev } from '$app/environment';
 
-export function log(msg: any) {
-    if (dev) {
-        console.log(msg);
-    }
+export function log(message: unknown) {
+  if (dev) {
+    console.log(message);
+  }
 }

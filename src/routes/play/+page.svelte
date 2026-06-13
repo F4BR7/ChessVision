@@ -7,9 +7,9 @@
   import { games } from '$lib/games';
   import { buildGameRecord } from '$lib/pgn';
   import type { Evaluation } from '$models/Evaluation';
+  import type { Settings as SettingsType } from '$models/Settings';
   import Label from '$models/Label';
   import { beforeNavigate } from '$app/navigation';
-  import { onDestroy } from 'svelte';
 
   let gameState: 'selector' | 'playing' = 'selector';
   let difficulty = 3;
@@ -17,30 +17,15 @@
   let gameOver = false;
   let gameInProgress = false;
   let chessboardRef;
- 
+
   beforeNavigate((navigation) => {
     if (!gameInProgress) return;
 
-    const confirmed = confirm(
-        'Tienes una partida en curso. ¿Seguro que quieres abandonarla?'
-    );
+    const confirmed = confirm('Tienes una partida en curso. ¿Seguro que quieres abandonarla?');
 
     if (!confirmed) {
-        navigation.cancel();
+      navigation.cancel();
     }
-});
-
-  onDestroy(() => {
-    chess = new Chess();
-
-  });
-
-
-  beforeNavigate((nav) => {
-    if (!gameInProgress) return;
-    
-    const leave = confirm('Tienes una partida en curso. Si sales, se perderá el progreso.');
-    if (!leave) nav.cancel();
   });
 
   const playDifficulty: Writable<number> = getContext('playDifficulty');
@@ -49,11 +34,10 @@
   const history: Writable<Move[]> = getContext('history');
   const move: Writable<number> = getContext('move');
   const evaluations: Writable<Evaluation[]> = getContext('evaluations');
-  
-  const settings = getContext('settings');
+
+  const settings: Writable<SettingsType> = getContext('settings');
 
   let showHints = false;
-  let showMoveQuality = false;
 
   function flipBoard() {
     settings.update((s) => ({
@@ -67,7 +51,6 @@
     saved = false;
     gameOver = false;
   }
-  
 
   const resetBoard = () => {
     chess.reset();
@@ -80,11 +63,16 @@
   const saveGame = () => {
     if (saved || $history.length === 0) return;
     chess.header(
-      'Event', `IA Nivel ${difficulty}`,
-      'Site', 'ChessVision',
-      'Date', new Date().toISOString().slice(0, 10).replace(/-/g, '.'),
-      'White', 'Tú',
-      'Black', `Stockfish (Nivel ${difficulty})`
+      'Event',
+      `IA Nivel ${difficulty}`,
+      'Site',
+      'ChessVision',
+      'Date',
+      new Date().toISOString().slice(0, 10).replace(/-/g, '.'),
+      'White',
+      'Tú',
+      'Black',
+      `Stockfish (Nivel ${difficulty})`
     );
     const record = buildGameRecord(chess, $history, {
       type: 'AI',
@@ -93,7 +81,7 @@
     });
     record.white = 'Tú';
     record.black = `Stockfish (Nivel ${difficulty})`;
-    console.log(record);  
+    record.playerColor = 'white';
     games.addGame(record);
     saved = true;
   };
@@ -110,12 +98,10 @@
   const handleNewGame = () => {
     // Persist the current game (if any) before leaving the board.
     if (
-        gameInProgress &&
-        !confirm(
-            '¿Seguro que quieres iniciar una nueva partida?\n\nSe perderá la partida actual.'
-        )
+      gameInProgress &&
+      !confirm('¿Seguro que quieres iniciar una nueva partida?\n\nSe perderá la partida actual.')
     ) {
-        return;
+      return;
     }
 
     saveGame();
@@ -124,14 +110,14 @@
   };
 
   // Detect the end of the game whenever the position changes.
-$: if (gameState === 'playing' && $position) {
+  $: if (gameState === 'playing' && $position) {
     gameOver = chess.isGameOver();
 
     if (gameOver) {
-        gameInProgress = false;
-        saveGame();
+      gameInProgress = false;
+      saveGame();
     }
-}
+  }
 
   const resultText = (): string => {
     if (chess.isCheckmate())
@@ -166,12 +152,12 @@ $: if (gameState === 'playing' && $position) {
                 {level === 1
                   ? 'Principiante (~500 Elo)'
                   : level === 2
-                  ? 'Aficionado (~900 Elo)'
-                  : level === 3
-                  ? 'Intermedio (~1400 Elo)'
-                  : level === 4
-                  ? 'Experto (~2200 Elo)'
-                  : 'Maestro (~3000 Elo)'}  
+                    ? 'Aficionado (~900 Elo)'
+                    : level === 3
+                      ? 'Intermedio (~1400 Elo)'
+                      : level === 4
+                        ? 'Experto (~2200 Elo)'
+                        : 'Maestro (~3000 Elo)'}
               </div>
             </button>
           {/each}
@@ -188,113 +174,93 @@ $: if (gameState === 'playing' && $position) {
   </div>
 {:else}
   <!-- Game Board -->
-<div class="mx-auto my-6 md:my-10 max-w-[1285px] px-4">
-  <div class="flex justify-center gap-8 items-start">
+  <div class="mx-auto my-6 md:my-10 max-w-[1285px] px-4">
+    <div class="flex justify-center gap-8 items-start">
+      <EvaluationBar evaluation={{ score: 0, type: 'cp', pv: '', label: Label.UNDEFINED }} />
 
-  <EvaluationBar evaluation={{ score: 0, type: 'cp', pv: '', label: Label.UNDEFINED }} />
-
-  <div class="flex-1">
-
-<div class="mb-3 flex items-center gap-2 px-2 text-xl font-bold text-white">
-  ♟️ <span> {  difficulty === 1 ? 'Stockfish Principiante (~500 Elo)' :
-  difficulty === 2 ? 'Stockfish Aficionado (~900 Elo)' :
-  difficulty === 3 ? 'Stockfish Intermedio (~1400 Elo)' :
-  difficulty === 4 ? 'Stockfish Experto (~2200 Elo)' :
-  'Stockfish Maestro (~3000 Elo)'}</span>
-</div>
-
-<Chessboard
-  bind:this={chessboardRef}
-  {showHints}
-  {showMoveQuality}
-/>
-
-<div class="mt-3 flex items-center gap-2 px-2 text-xl font-bold text-white">
-  👤 <span>Tú</span>
-</div>
-
-</div>
-    <!-- Game Controls -->
-<div class="w-[420px] shrink-0 pt-12">
-  <div class="card pt-4 pb-6 px-6 bg-surface-800 border border-surface-700 min-h-[720px] flex flex-col">
-
-
-    <div>
-      <h2 class="h2 text-white mb-6">Juego</h2>
-
-      <div class="rounded-lg bg-surface-700/40 p-3 mb-5">
-        <div class="text-surface-400">
-          Nivel:
-          <span class="text-primary-400 font-bold">Nivel {difficulty}</span>
+      <div class="flex-1">
+        <div class="mb-3 flex items-center gap-2 px-2 text-xl font-bold text-white">
+          ♟️ <span>
+            {difficulty === 1
+              ? 'Stockfish Principiante (~500 Elo)'
+              : difficulty === 2
+                ? 'Stockfish Aficionado (~900 Elo)'
+                : difficulty === 3
+                  ? 'Stockfish Intermedio (~1400 Elo)'
+                  : difficulty === 4
+                    ? 'Stockfish Experto (~2200 Elo)'
+                    : 'Stockfish Maestro (~3000 Elo)'}</span
+          >
         </div>
 
-        <div class="mt-1 text-surface-400">
-          Turno:
-          <span class="text-white font-medium">Blancas</span>
+        <Chessboard bind:this={chessboardRef} {showHints} />
+
+        <div class="mt-3 flex items-center gap-2 px-2 text-xl font-bold text-white">
+          👤 <span>Tú</span>
+        </div>
+      </div>
+      <!-- Game Controls -->
+      <div class="w-[420px] shrink-0 pt-12">
+        <div
+          class="card pt-4 pb-6 px-6 bg-surface-800 border border-surface-700 min-h-[720px] flex flex-col"
+        >
+          <div>
+            <h2 class="h2 text-white mb-6">Juego</h2>
+
+            <div class="rounded-lg bg-surface-700/40 p-3 mb-5">
+              <div class="text-surface-400">
+                Nivel:
+                <span class="text-primary-400 font-bold">Nivel {difficulty}</span>
+              </div>
+
+              <div class="mt-1 text-surface-400">
+                Turno:
+                <span class="text-white font-medium">Blancas</span>
+              </div>
+            </div>
+          </div>
+
+          {#if gameOver}
+            <div class="card p-4 bg-surface-700 border border-primary-600 text-center">
+              <div class="font-bold text-white mb-1">{resultText()}</div>
+              <div class="text-xs text-surface-400">Guardada en la Biblioteca</div>
+            </div>
+          {/if}
+
+          <div class="space-y-3">
+            <button on:click={handleNewGame} class="w-full btn variant-filled-primary py-3">
+              🎮 Nueva Partida
+            </button>
+
+            <button on:click={restartGame} class="w-full btn variant-filled-surface py-3">
+              🔄 Reiniciar
+            </button>
+
+            <button on:click={flipBoard} class="w-full btn variant-filled-surface py-3">
+              🔃 Voltear tablero
+            </button>
+          </div>
+
+          <div class=" border-surface-700 pt-4 space-y-3">
+            <label
+              class="flex items-center justify-between rounded-xl border border-surface-700 px-4 py-3 hover:bg-surface-700 transition cursor-pointer"
+            >
+              <span class="font-medium">Pistas</span>
+              <input bind:checked={showHints} type="checkbox" class="slider" />
+            </label>
+          </div>
+
+          <div class="mt-auto border-t border-surface-700 pt-4">
+            <div class="text-sm font-semibold text-surface-300 mb-3">Últimas jugadas</div>
+
+            <div class="space-y-2 text-sm text-surface-400">
+              <div>1. e4 &nbsp;&nbsp;&nbsp; Nf6</div>
+              <div>2. f3 &nbsp;&nbsp;&nbsp; d5</div>
+              <div>3. Nc3 &nbsp;&nbsp;&nbsp; e6</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-
-    {#if gameOver}
-      <div class="card p-4 bg-surface-700 border border-primary-600 text-center">
-        <div class="font-bold text-white mb-1">{resultText()}</div>
-        <div class="text-xs text-surface-400">
-          Guardada en la Biblioteca
-        </div>
-      </div>
-    {/if}
-
-    <div class="space-y-3">
-      <button
-        on:click={handleNewGame}
-        class="w-full btn variant-filled-primary py-3"
-      >
-        🎮 Nueva Partida
-      </button>
-
-      <button
-        on:click={restartGame}
-        class="w-full btn variant-filled-surface py-3"
-      >
-        🔄 Reiniciar
-      </button>
-
-      <button
-  on:click={flipBoard}
-  class="w-full btn variant-filled-surface py-3"
->
-  🔃 Voltear tablero
-      </button>
-    </div>
-
-    <div class=" border-surface-700 pt-4 space-y-3">
-      <label class="flex items-center justify-between rounded-xl border border-surface-700 px-4 py-3 hover:bg-surface-700 transition cursor-pointer">
-        <span class="font-medium">Calidad de jugada</span>
-        <input bind:checked={showMoveQuality} type="checkbox" class="slider" />
-      </label>
-
-      <label class="flex items-center justify-between rounded-xl border border-surface-700 px-4 py-3 hover:bg-surface-700 transition cursor-pointer">
-        <span class="font-medium">Pistas</span>
-        <input bind:checked={showHints}  type="checkbox" class="slider" />
-      </label>
-    </div>
-
-    <div class="mt-auto border-t border-surface-700 pt-4">
-      <div class="text-sm font-semibold text-surface-300 mb-3">
-        Últimas jugadas
-      </div>
-
-      <div class="space-y-2 text-sm text-surface-400">
-        <div>1. e4 &nbsp;&nbsp;&nbsp; Nf6</div>
-        <div>2. f3 &nbsp;&nbsp;&nbsp; d5</div>
-        <div>3. Nc3 &nbsp;&nbsp;&nbsp; e6</div>
-      </div>
-    </div>
-
   </div>
-</div>
-
-  </div>      
-
-</div>
 {/if}

@@ -1,13 +1,6 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { games, type GameRecord, type GameResult, type GameType } from '$lib/games';
-  import { writable } from 'svelte/store';
-  export const selectedLibraryGame = writable<GameRecord | null>(null);
-    
-
-  export function setSelectedLibraryGame(game: GameRecord) {
-    selectedLibraryGame.set(game);
-  }
   import { setPendingPgn } from '$lib/library';
   import { parsePgnToGames, gamesToPgn, downloadText, gameFileName } from '$lib/pgn';
   import {
@@ -17,11 +10,6 @@
     formatDate,
     gameTitle
   } from '$lib/format';
-
-  function openGame(game) {
-    goto(`/biblioteca/partida/${game.id}`);
-} 
-
 
   type TypeFilter = 'all' | GameType;
   type ResultFilter = 'all' | GameResult;
@@ -38,10 +26,10 @@
     const id = sessionStorage.getItem('selectedGameId');
 
     if (id) {
-        selectedGame = $games.find(g => String(g.id) === id) ?? null;
-        sessionStorage.removeItem('selectedGameId');
+      selectedGame = $games.find((g) => String(g.id) === id) ?? null;
+      sessionStorage.removeItem('selectedGameId');
     }
-});
+  });
 
   // Import UI state
   let showImport = false;

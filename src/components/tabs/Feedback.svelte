@@ -17,5 +17,7 @@
 </div>
 <div class="mt-4 text-center card variant-ghost p-2">
   <p class="text-lg">{opening ?? label}</p>
-  <p class="text-sm text-primary-400">{best && shouldShowBest(label) ? `lo mejor era ${best}` : "..."}</p>
+  <p class="text-sm text-primary-400">
+    {best && shouldShowBest(label) ? `lo mejor era ${best}` : '...'}
+  </p>
 </div>

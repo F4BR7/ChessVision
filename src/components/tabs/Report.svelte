@@ -13,7 +13,7 @@
   const position: Writable<string> = getContext('position');
   const evaluation: Writable<Evaluation> = getContext('evaluation');
 
-  let data: TableSource = toTableSource($history);
+  let data: TableSource;
   let san: string = $history[$move]?.san;
 
   let score: string;
@@ -25,9 +25,16 @@
 
   $: san = $history[$move]?.san;
   $: score = formatScore($evaluation);
+  $: data = toTableSource($history);
 </script>
 
 <div class="h-28 md:h-32 lg:h-56 mb-2 overflow-y-auto">
   <Table source={data} interactive on:selected={onSelected} />
 </div>
-<Feedback {san} {score} label={$evaluation.label} opening={$evaluation.opening} best={$evaluation.best} />
+<Feedback
+  {san}
+  {score}
+  label={$evaluation.label}
+  opening={$evaluation.opening}
+  best={$evaluation.best}
+/>

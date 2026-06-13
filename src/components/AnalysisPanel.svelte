@@ -20,7 +20,7 @@
 
   let currentTab: string = 'load';
 
-  // dsiplay names for players, not necessarily the ones from the PGN tags
+  // Display names for players; these may differ from the raw PGN tags.
   let whitePlayer = 'Blancas';
   let blackPlayer = 'Negras';
 
@@ -30,92 +30,54 @@
   let isLoading: boolean = false;
   let progress = 0;
 
-
-// Si el análisis se realizó desde la ruta "Revisar".
+  // True when the analysis was launched from the review route.
   $: isReview = $page.url.pathname.startsWith('/review');
 
   // Persist a finished analysis into the local game library.
-const saveAnalyzedGame = (
-  pgn: string,
-  report: Evaluation[],
-  moves: Move[]
-) => {
-  try {
-    const recordChess = new ChessClass();
-    recordChess.loadPgn(pgn);
+  const saveAnalyzedGame = (pgn: string, report: Evaluation[], moves: Move[]) => {
+    try {
+      const recordChess = new ChessClass();
+      recordChess.loadPgn(pgn);
 
-    // Accuracy general (Online / PGN)
-    const accuracy = computeAccuracy(report, moves);
+      const accuracy = computeAccuracy(report, moves);
+      const normalizedPgn = pgn.trim();
 
-    // Buscar si corresponde a una partida AI guardada
-    const existingGame = games.all().find(
-      (g) => g.type === 'AI' && g.pgn === pgn
-    );
+      const existingGame = games
+        .all()
+        .find((g) => g.type === 'AI' && g.pgn.trim() === normalizedPgn);
 
-    // Errores
-    let inaccuracies: number;
-    let mistakes: number;
-    let blunders: number;
+      // AI games store player-only mistakes; imported/online games store totals.
+      const { inaccuracies, mistakes, blunders } = existingGame?.playerColor
+        ? countPlayerMistakes(report, moves, existingGame.playerColor)
+        : countMistakes(report);
 
-    if (existingGame?.playerColor) {
-      // Solo errores del jugador
-      ({
-        inaccuracies,
-        mistakes,
-        blunders
-      } = countPlayerMistakes(
-        report,
-        moves,
-        existingGame.playerColor
-      ));
-    } else {
-      // Online / PGN
-      ({
-        inaccuracies,
-        mistakes,
-        blunders
-      } = countMistakes(report));
-    }
-
-    const record = buildGameRecord(
-      recordChess,
-      recordChess.history({ verbose: true }),
-      {
+      const record = buildGameRecord(recordChess, recordChess.history({ verbose: true }), {
         type: isReview ? 'Online' : 'PGN',
 
-        // Accuracy global para Online/PGN
         accuracy: accuracy.overall,
 
         inaccuracies,
         mistakes,
         blunders,
 
-        event: isReview
-          ? 'Revisión online'
-          : 'Análisis'
+        event: isReview ? 'Revision online' : 'Analisis'
+      });
+
+      if (existingGame) {
+        games.updateGame({
+          ...existingGame,
+          accuracy: existingGame.playerColor === 'black' ? accuracy.black : accuracy.white,
+          inaccuracies,
+          mistakes,
+          blunders
+        });
+      } else {
+        games.addGame(record);
       }
-    );
-
-    // Actualizar partida AI existente
-    if (existingGame) {
-      existingGame.accuracy =
-        existingGame.playerColor === 'black'
-          ? accuracy.black
-          : accuracy.white;
-
-      existingGame.inaccuracies = inaccuracies;
-      existingGame.mistakes = mistakes;
-      existingGame.blunders = blunders;
-
-      games.updateGame(existingGame);
-    } else {
-      // Guardar análisis Online / PGN
-      games.addGame(record);
+    } catch (e) {
+      log(`No se pudo guardar la partida analizada: ${e}`);
     }
-  } catch (e) {
-    log(`No se pudo guardar la partida analizada: ${e}`);
-  }
-};
+  };
 
   onMount(() => {
     const pending = consumePendingPgn();
@@ -173,10 +135,10 @@ const saveAnalyzedGame = (
 
 <div class="card p-4 h-full flex flex-col">
   <section class="mb-4 grow">
-  <div class="mb-3 flex justify-between text-sm text-surface-300">
-    <span>Blancas: {whitePlayer}</span>
-    <span>Negras: {blackPlayer}</span>
-  </div>
+    <div class="mb-3 flex justify-between text-sm text-surface-300">
+      <span>Blancas: {whitePlayer}</span>
+      <span>Negras: {blackPlayer}</span>
+    </div>
     <TabGroup justify="justify-center">
       <Tab bind:group={currentTab} name="load" value="load">💾 Carga</Tab>
       <Tab bind:group={currentTab} name="report" value="report">📊 Informe</Tab>

@@ -5,10 +5,11 @@
   import { getModalStore } from '@skeletonlabs/skeleton';
   import { getContext } from 'svelte';
   import type { Writable } from 'svelte/store';
+  import type { ChessComGame } from '$lib/api';
 
-  export let onChange: (pgn: string) => void = (pgn) => console.log('pgn => ', pgn);
+  export let onChange: (pgn: string) => void = () => {};
   export let analyze: () => void;
-  export let isLoading;
+  export let isLoading: boolean;
   export let initialPgn: string = '';
 
   const settings: Writable<Settings> = getContext('settings');
@@ -67,7 +68,7 @@
     }
   };
 
-  const onGameSelected = (game: { pgn: string }, orientation: 'w' | 'b') => {
+  const onGameSelected = (game: ChessComGame, orientation: 'w' | 'b') => {
     strPgn = game.pgn;
     onChange(strPgn);
     $settings.orientation = orientation;

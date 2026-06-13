@@ -63,14 +63,10 @@
         <div class="text-primary-400 font-bold">
           {precision}%
         </div>
-        <div class="text-xs text-surface-500">
-          Precisión
-        </div>
+        <div class="text-xs text-surface-500">Precisión</div>
       </div>
     {:else}
-      <div class="text-xs text-surface-500">
-        Sin revisar
-      </div>
+      <div class="text-xs text-surface-500">Sin revisar</div>
     {/if}
   </div>
 </div>

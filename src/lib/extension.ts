@@ -7,19 +7,20 @@ import LabelPath from '../components/LabelPath.svelte';
 
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 
+type ChessboardWithMarkers = {
+  setMarkers?: (markers: Marker[]) => void;
+};
+
 export class EvaluationMarkerExtension extends Extension {
   markers: Marker[];
 
-  constructor(chessboard: any) {
+  constructor(chessboard: ChessboardWithMarkers) {
     super(chessboard);
     this.markers = [];
 
     chessboard.setMarkers = this.setMarkers.bind(this);
 
-    this.registerExtensionPoint(
-      EXTENSION_POINT.afterRedrawBoard,
-      this.drawMarkers.bind(this)
-    );
+    this.registerExtensionPoint(EXTENSION_POINT.afterRedrawBoard, this.drawMarkers.bind(this));
   }
 
   setMarkers(markers: Marker[]) {
@@ -28,8 +29,6 @@ export class EvaluationMarkerExtension extends Extension {
   }
 
   drawMarkers() {
-    console.log('DRAW MARKERS');
-
     const beforePieceLayer: Document = this?.chessboard?.view?.markersLayer;
     const afterPieceLayer: Document = this?.chessboard?.view?.markersTopLayer;
     const width = this?.chessboard?.view?.squareWidth;
@@ -63,7 +62,7 @@ export class EvaluationMarkerExtension extends Extension {
         const circle = document.createElementNS(SVG_NAMESPACE, 'circle');
         circle.setAttribute('r', width / 4);
         circle.setAttribute('cx', point.x + width);
-        
+
         circle.setAttribute('cy', point.y);
         circle.setAttribute('fill', getLabelHexColor(marker.label));
 

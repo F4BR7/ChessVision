@@ -1,11 +1,12 @@
 <script lang="ts">
   // @ts-expect-error: no declaration file as it was written in JS
   import { Chessboard, INPUT_EVENT_TYPE } from 'cm-chessboard/src/Chessboard';
-  import { DEFAULT_POSITION, type Move } from 'chess.js';
-  // @ts-ignore
-  import { Markers} from 'cm-chessboard/src/extensions/markers/Markers.js';
+  import { DEFAULT_POSITION, type Move, type Square } from 'chess.js';
+  // @ts-expect-error: no declaration file as it was written in JS
+  import { Markers } from 'cm-chessboard/src/extensions/markers/Markers.js';
   import { getContext, onMount } from 'svelte';
   import { derived, type Writable, type Readable } from 'svelte/store';
+  import { page } from '$app/state';
   import type { Evaluation } from '$models/Evaluation';
   import { EvaluationMarkerExtension } from '$lib/extension';
   import type { Settings } from '$models/Settings';
@@ -18,13 +19,8 @@
 
   let board: Chessboard;
   let aiThinking = false;
-  export let showMoveQuality = false;
   export let showHints = false;
 
-  $: if (showHints && board) {
-    showHint();
-  }
-  
   $: if (!showHints && board) {
     board.setMarkers([]);
   }
@@ -39,14 +35,11 @@
   const playDifficulty: Writable<number> = getContext('playDifficulty');
   const orientation = derived(settings, ($settings) => $settings.orientation);
 
-
-  // DEBUG: Log context values at initialization
-    console.log(`--- CHESSBOARD INIT DEBUG ---`);
-    console.log(`playDifficulty value:`, playDifficulty);
-    console.log(`typeof playDifficulty:`, typeof playDifficulty);
-    console.log(`playDifficulty === undefined:`, playDifficulty === undefined);
-
-
+  type MoveInputEvent = {
+    type: string;
+    squareFrom: Square;
+    squareTo?: Square;
+  };
 
   // Map difficulty level to Stockfish depth
   const getDifficultyDepth = (difficulty: number): number => {
@@ -76,27 +69,22 @@
   };
 
   const showHint = async () => {
-  const engineWorker = $engine;
+    const engineWorker = $engine;
 
-  if (!engineWorker) return;
+    if (!engineWorker) return;
 
-  const result = await evaluate(engineWorker, chess.fen(), 12);
+    const result = await evaluate(engineWorker, chess.fen(), 12);
 
-  console.log('HINT RESULT:', result);
+    const bestMove = getFirstMoveFromPv(result.pv);
 
-  const bestMove = getFirstMoveFromPv(result.pv);
+    if (!bestMove) return;
 
-  console.log('BEST MOVE:', bestMove);
-
-  if (!bestMove) return;
-
-  alert(`Mejor jugada: ${bestMove}`);
-};
+    alert(`Mejor jugada: ${bestMove}`);
+  };
 
   // Make Stockfish move
   const makeStockfishMove = async () => {
     if (!playDifficulty || aiThinking) return;
-
 
     aiThinking = true;
     let difficulty = 15;
@@ -107,10 +95,6 @@
         difficulty = getDifficultyDepth(value);
       });
       unsubscribe();
-
-      console.log(`--- STOCKFISH THINKING ---`);
-      console.log(`Difficulty level: ${difficulty}`);
-      console.log(`CURRENT FEN: ${chess.fen()}`);
 
       const engineWorker = $engine;
       if (!engineWorker) {
@@ -144,29 +128,15 @@
         return;
       }
 
-      console.log(`STOCKFISH MOVE: ${longAlgebraic} (${moveCoords.from}→${moveCoords.to})`);
-
       // Apply the move
       const moveResult = chess.move({
         from: moveCoords.from,
         to: moveCoords.to
       });
 
-
-
       if (moveResult) {
-
-        // ----------------------------------------------------
-        // Reproducir sonido según el tipo de movimiento
+        // Keep UI state synchronized after Stockfish makes a legal move.
         playMoveTypeSound(getMoveType(moveResult.san));
-        setTimeout(() => {
-        playMoveTypeSound(getMoveType(moveResult.san));
-    }, 0);
-
-    console.log(`PLAYER MOVE: ${moveResult.san}`);
-
-
-        // Update stores
         position.set(chess.fen());
         history.set(chess.history({ verbose: true }));
         move.set(-1);
@@ -176,31 +146,6 @@
             showHint();
           }, 300);
         }
-
-        if (showMoveQuality) {
-          const engineWorker = $engine;
-  
-          if (engineWorker) {
-            const result = await evaluate(
-              engineWorker,
-              chess.fen(),
-              12
-            );
-          
-            const bestMove = getFirstMoveFromPv(result.pv);
-          
-            if (bestMove) {
-              const played = moveResult.from + moveResult.to;
-            
-              if (played === bestMove.substring(0, 4)) {
-                console.log('⭐ BEST MOVE');
-              } else {
-                console.log('⚠️ NOT BEST MOVE');
-              }
-            }
-          }
-        }
-
       } else {
         console.error(`Stockfish move validation failed: ${moveCoords.from}→${moveCoords.to}`);
       }
@@ -211,17 +156,14 @@
     }
   };
 
-  import { page } from '$app/state';
   const isReviewPage = page.url.pathname === '/review';
 
+  // ====================================================
+  // INICIALIZACIÓN DEL TABLERO
+  // ====================================================
 
-// ====================================================
-// INICIALIZACIÓN DEL TABLERO
-// ====================================================
-  
   onMount(async () => {
     board = new Chessboard(boardElement, {
-      
       position: DEFAULT_POSITION,
       assetsUrl: '/',
       animationDuration: 50,
@@ -244,59 +186,52 @@
       ]
     });
 
-    // Enable move input after board initialization
-    board.enableMoveInput((event) => {
+    // Validate user moves through chess.js before the board accepts them.
+    board.enableMoveInput((event: MoveInputEvent) => {
       const squareFrom = event.squareFrom;
       const piece = board.getPiece(squareFrom);
       const currentTurn = chess.turn(); // 'w' or 'b'
       const pieceColor = piece?.[0]; // 'w' or 'b'
-      
+
       if (isReviewPage) {
         return false;
       }
-  
-       
+
       if (event.type === INPUT_EVENT_TYPE.moveInputStarted) {
-        
-          if (!piece) {
-            console.log(`Rejected: No piece at ${squareFrom}`);
-            return false;
-          }
-        
-          if (pieceColor !== currentTurn) {
-            console.log(`Rejected: Wrong side to move`);
-            return false;
-          }
-        
-          const legalMoves = chess.moves({
-            square: squareFrom,
-            verbose: true
-          });
-          
-          board.setMarkers([
-            {
-              square: squareFrom,
-              label: 'SELECTED',
-              showIcon: false
-            },
-              ...legalMoves.map((move) => ({
-                square: move.to,
-                label: 'LEGAL',
-                showIcon: false
-              }))
-            ]);
-          
-          // PRUEBA VISUAL
-          console.log(`Accepted: Piece can be moved`);
-          return true;
+        if (!piece) {
+          return false;
         }
+
+        if (pieceColor !== currentTurn) {
+          return false;
+        }
+
+        const legalMoves = chess.moves({
+          square: squareFrom,
+          verbose: true
+        });
+
+        board.setMarkers([
+          {
+            square: squareFrom,
+            label: 'SELECTED',
+            showIcon: false
+          },
+          ...legalMoves.map((move) => ({
+            square: move.to,
+            label: 'LEGAL',
+            showIcon: false
+          }))
+        ]);
+
+        return true;
+      }
 
       if (event.type === INPUT_EVENT_TYPE.validateMoveInput) {
         const squareFrom = event.squareFrom;
         const squareTo = event.squareTo;
 
-        console.log(`--- VALIDATING MOVE ---`);
-        console.log(`Attempted move: ${squareFrom} -> ${squareTo}`);
+        if (!squareTo) return false;
 
         // Get all legal moves from this square
         const legalMoves = chess.moves({ square: squareFrom, verbose: true });
@@ -304,8 +239,6 @@
 
         // If move doesn't exist in legal moves, reject immediately
         if (!moveExists) {
-          console.log(`Rejected: ${squareFrom}→${squareTo} is not a legal move`);
-          console.log(`Legal moves from ${squareFrom}: ${legalMoves.map((m) => m.san).join(', ')}`);
           return false;
         }
 
@@ -316,10 +249,6 @@
         });
 
         if (moveResult) {
-          console.log(`PLAYER MOVE: ${moveResult.san}`);
-          console.log(`Accepted: ${moveResult.san}`);
-          console.log(`New turn: ${chess.turn() === 'w' ? 'White' : 'Black'}`);
-
           // Update position store with new FEN
           position.set(chess.fen());
           // Update history store
@@ -327,25 +256,13 @@
           // Reset move index (no specific move selected)
           move.set(-1);
 
-          // DEBUG: Log context values
-          console.log(`--- DEBUG: CHECKING AI CONDITION ---`);
-          console.log(`playDifficulty:`, playDifficulty);
-          console.log(`typeof playDifficulty:`, typeof playDifficulty);
-          console.log(`chess.turn():`, chess.turn());
-          console.log(`chess.turn() === 'b':`, chess.turn() === 'b');
-          console.log(`playDifficulty && chess.turn() === 'b':`, playDifficulty && chess.turn() === 'b');
-
           // If Play tab is active and it's Stockfish's turn (Black), make the AI move
           if (playDifficulty && chess.turn() === 'b') {
-            console.log('Condition TRUE - calling makeStockfishMove()');
             makeStockfishMove();
-          } else {
-            console.log('Condition FALSE - NOT calling makeStockfishMove()');
           }
 
           return true;
         } else {
-          console.log(`Rejected: Move validation failed (chess.js internal error)`);
           return false;
         }
       }
@@ -358,8 +275,6 @@
         board.setMarkers([]);
       }
     });
-
-    console.log('MOVE INPUT ENABLED');
   });
 
   orientation.subscribe((value) => {
@@ -387,8 +302,7 @@
       board?.setMarkers([]);
     }
   }
-export { showHint };
-
+  export { showHint };
 </script>
 
 <div class="w-full" bind:this={boardElement}></div>

@@ -6,43 +6,43 @@
   <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
     <!-- Logo/Title -->
     <div class="flex items-center gap-2">
-      <span class="text-2xl font-bold bg-gradient-to-r from-primary-400 to-accent-400 bg-clip-text text-transparent">
+      <span
+        class="text-2xl font-bold bg-gradient-to-r from-primary-400 to-accent-400 bg-clip-text text-transparent"
+      >
         ChessVision
       </span>
     </div>
 
-    
     <!-- Navigation Links -->
     <div class="flex items-center gap-1 flex-wrap justify-center">
       <a
         href="/"
         class="px-4 py-2 rounded-lg transition {$page.url.pathname === '/'
-            ? 'bg-primary-600 text-white'
-            : 'text-surface-300 hover:bg-surface-800'}"
-    >
+          ? 'bg-primary-600 text-white'
+          : 'text-surface-300 hover:bg-surface-800'}"
+      >
         🏠 Inicio
       </a>
       {#if $page.url.pathname !== '/play'}
-
-    <a
-        href="/library"
-        class="px-4 py-2 rounded-lg transition {$page.url.pathname === '/library'
+        <a
+          href="/library"
+          class="px-4 py-2 rounded-lg transition {$page.url.pathname === '/library'
             ? 'bg-primary-600 text-white'
             : 'text-surface-300 hover:bg-surface-800'}"
-    >
-        📚 Biblioteca
-    </a>
+        >
+          📚 Biblioteca
+        </a>
 
-    <a
-        href="/stats"
-        class="px-4 py-2 rounded-lg transition {$page.url.pathname === '/stats'
+        <a
+          href="/stats"
+          class="px-4 py-2 rounded-lg transition {$page.url.pathname === '/stats'
             ? 'bg-primary-600 text-white'
             : 'text-surface-300 hover:bg-surface-800'}"
-    >
-        📈 Estadísticas
-    </a>
-    {/if}
-</div>
+        >
+          📈 Estadísticas
+        </a>
+      {/if}
+    </div>
   </div>
 </nav>
 

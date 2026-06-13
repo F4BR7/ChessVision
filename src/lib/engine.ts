@@ -36,8 +36,8 @@ export async function init(engine: string) {
 
   const worker = new workerModule.default();
 
-  worker.onmessage = ({ data }: any) => log(`page got message: ${data}`);
-  worker.onerror = (ev: any) => log(`page got error: ${ev.message}`);
+  worker.onmessage = ({ data }: MessageEvent<string>) => log(`page got message: ${data}`);
+  worker.onerror = (ev: ErrorEvent) => log(`page got error: ${ev.message}`);
 
   if (engine.includes('multi')) {
     worker.postMessage(`setoption name Threads value ${window.navigator.hardwareConcurrency}`);
@@ -103,12 +103,18 @@ export function analyze_move(
     return turn === 'b' ? EVAL_CHECKMATE_WHITE : EVAL_CHECKMATE_BLACK;
   }
 
-  // Reverse when black
-  rawEval.score = turn === 'w' ? rawEval.score : -rawEval.score;
-
-  if (rawEval.altLine && turn === 'b') {
-    rawEval.altLine.score = -rawEval.altLine.score;
-  }
+  // Stockfish returns the score from the side-to-move perspective. The rest of
+  // the app compares positions from White's perspective, so normalize once here.
+  const normalizedEval: RawEval = {
+    ...rawEval,
+    score: turn === 'w' ? rawEval.score : -rawEval.score,
+    altLine: rawEval.altLine
+      ? {
+          ...rawEval.altLine,
+          score: turn === 'w' ? rawEval.altLine.score : -rawEval.altLine.score
+        }
+      : undefined
+  };
 
   let label;
 
@@ -118,7 +124,7 @@ export function analyze_move(
     const openingName: string | undefined = OPENINGS[chess.fen() as keyof typeof OPENINGS];
     if (openingName) {
       return {
-        ...rawEval,
+        ...normalizedEval,
         label: Label.BOOK,
         opening: openingName
       };
@@ -130,10 +136,11 @@ export function analyze_move(
     label = Label.BEST;
   }
 
+  const previousForComparison: RawEval = previousEval ?? { score: 0, type: 'cp', pv: '' };
   const winChanceLost =
     turn === 'b'
-      ? computeWinChanceLost(previousEval!, rawEval)
-      : -computeWinChanceLost(previousEval!, rawEval);
+      ? computeWinChanceLost(previousForComparison, normalizedEval)
+      : -computeWinChanceLost(previousForComparison, normalizedEval);
 
   // Check for EXCELLENT, GOOD, INACCURACY, MISTAKE or BLUNDER
   if (label === undefined) {
@@ -152,7 +159,7 @@ export function analyze_move(
 
   // Check for FORCED, GREAT or BRILLIANT
   if (label === Label.BEST) {
-    if (isForced(previousEval!)) {
+    if (previousEval && isForced(previousEval)) {
       label = Label.FORCED;
     } else if (isSacrifice(chess, move)) {
       label = Label.BRILLIANT;
@@ -167,7 +174,7 @@ export function analyze_move(
   }
 
   return {
-    ...rawEval,
+    ...normalizedEval,
     label,
     best
   };
@@ -179,7 +186,7 @@ const REGEX_MATCH =
 export function evaluate(worker: Worker, fen: string, depth: number): Promise<RawEval> {
   return new Promise((resolve) => {
     const regexInfo = new RegExp(`^info depth ${depth} seldepth \\d+ multipv`);
-    let result: any = {};
+    let result: Partial<RawEval> = {};
 
     worker.onmessage = ({ data }: { data: string }) => {
       if (regexInfo.test(data)) {
@@ -188,26 +195,32 @@ export function evaluate(worker: Worker, fen: string, depth: number): Promise<Ra
           throw new Error(`REGEX_MATCH failed: ${data}`);
         }
         // Info best line
-        if (match.at(1) === '1') {
+        if (match[1] === '1') {
           result = {
             ...result,
-            type: match.at(2),
-            score: parseInt(match.at(3)!),
-            pv: match.at(4),
+            type: match[2] as RawEval['type'],
+            score: parseInt(match[3]),
+            pv: match[4],
             data
           };
         } else {
           // Alt line
           result.altLine = {
-            type: match.at(2),
-            score: parseInt(match.at(3)!),
-            pv: match.at(4)
+            type: match[2] as RawEval['type'],
+            score: parseInt(match[3]),
+            pv: match[4]
           };
         }
       }
       // Last message
       else if (data.startsWith('bestmove')) {
-        resolve(result);
+        resolve({
+          score: result.score ?? 0,
+          type: result.type ?? 'cp',
+          pv: result.pv ?? '',
+          data: result.data,
+          altLine: result.altLine
+        });
       }
     };
 

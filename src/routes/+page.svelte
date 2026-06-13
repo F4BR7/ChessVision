@@ -1,14 +1,15 @@
 <script lang="ts">
   import { games } from '$lib/games';
   import { goto } from '$app/navigation';
-
 </script>
 
 <!-- Clean Home/Dashboard -->
 <!-- Dashboard Cards -->
 <main class="mx-auto max-w-7xl px-6 py-8 space-y-8">
   <!-- Hero -->
-  <section class="rounded-3xl border border-slate-700/60 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 p-8 shadow-lg">
+  <section
+    class="rounded-3xl border border-slate-700/60 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 p-8 shadow-lg"
+  >
     <div class="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
       <div>
         <p class="text-sm font-medium tracking-wide text-slate-400">ChessVision</p>
@@ -55,12 +56,12 @@
       <p class="text-sm text-slate-400">Precisión promedio</p>
       <p class="mt-3 text-4xl font-bold text-lime-400">
         {(() => {
-          const analyzed = $games.filter((g) => g.accuracy !== undefined)
+          const analyzed = $games.filter((g) => g.accuracy !== undefined);
           const avg =
             analyzed.length > 0
               ? analyzed.reduce((sum, g) => sum + (g.accuracy ?? 0), 0) / analyzed.length
-              : 0
-          return Math.round(avg)
+              : 0;
+          return Math.round(avg);
         })()}%
       </p>
       <p class="mt-2 text-sm text-slate-500">Basada en partidas analizadas</p>
@@ -105,8 +106,8 @@
             {#each $games.slice(0, 2) as game}
               <button
                 on:click={() => {
-                    sessionStorage.setItem('selectedGameId', String(game.id));
-                    goto('/library');
+                  sessionStorage.setItem('selectedGameId', String(game.id));
+                  goto('/library');
                 }}
                 class="w-full rounded-xl border border-slate-700 bg-slate-900/60 p-4 text-left transition hover:border-emerald-500 hover:bg-slate-900"
               >
@@ -121,7 +122,7 @@
                         Jugador vs Jugador
                       {/if}
                     </p>
-                  
+
                     <p class="mt-1 text-sm text-slate-400">
                       {#if game.type === 'AI'}
                         Partida IA
@@ -133,11 +134,11 @@
                         Partida
                       {/if}
                     </p>
-                  
+
                     <p class="text-xs text-slate-500">
                       {game.date.toLocaleDateString('es-PY')}
                     </p>
-                  
+
                     {#if game.opening}
                       <p class="mt-2 text-xs text-emerald-400 line-clamp-2">
                         {game.opening}
@@ -149,20 +150,18 @@
                       <div class="font-bold text-emerald-400">
                         {Math.round(game.accuracy)}%
                       </div>
-                      <div class="text-xs text-slate-500">
-                        Precisión
-                      </div>
+                      <div class="text-xs text-slate-500">Precisión</div>
                     {:else}
-                      <div class="text-xs text-slate-500">
-                        Sin revisar
-                      </div>
+                      <div class="text-xs text-slate-500">Sin revisar</div>
                     {/if}
                   </div>
                 </div>
               </button>
             {/each}
           {:else}
-            <div class="md:col-span-2 rounded-xl border border-dashed border-slate-700 p-8 text-center text-slate-400">
+            <div
+              class="md:col-span-2 rounded-xl border border-dashed border-slate-700 p-8 text-center text-slate-400"
+            >
               Todavía no tienes partidas guardadas.
             </div>
           {/if}

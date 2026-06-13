@@ -1,8 +1,6 @@
 <script lang="ts">
-  // @ts-ignore: Side-effect stylesheet import
   import '../app.postcss';
   import 'cm-chessboard/assets/chessboard.css';
-
 
   import { initializeStores, Modal, type ModalComponent } from '@skeletonlabs/skeleton';
   import EngineHelp from '../components/tabs/modals/EngineHelp.svelte';
@@ -26,7 +24,6 @@
     PUBLIC_SENTRY_ORG,
     PUBLIC_SENTRY_PROJECT_ID
   } from '$env/static/public';
-
 
   initializeStores();
 
@@ -93,11 +90,23 @@
       });
     }
 
-    // Initialize enginees
+    let cleanupEngine = () => {};
+
+    // Recreate the Stockfish worker whenever the selected engine changes.
     if (browser) {
+      let currentWorker: Worker | undefined;
       const unsubscribe = settingsEngine.subscribe((eng) => {
-        init(eng).then((worker) => engine.set(worker));
+        currentWorker?.terminate();
+        init(eng).then((worker) => {
+          currentWorker = worker;
+          engine.set(worker);
+        });
       });
+
+      cleanupEngine = () => {
+        unsubscribe();
+        currentWorker?.terminate();
+      };
     }
 
     preloadAudio('sfx-move', '/media/move.webm');
@@ -105,6 +114,8 @@
     preloadAudio('sfx-check', '/media/check.webm');
     preloadAudio('sfx-promotion', '/media/promotion.webm');
     preloadAudio('sfx-checkmate', '/media/checkmate.webm');
+
+    return cleanupEngine;
   });
 </script>
 

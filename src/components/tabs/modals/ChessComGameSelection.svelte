@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { SvelteComponent } from 'svelte';
   import { getModalStore } from '@skeletonlabs/skeleton';
-  import { isDraw, userWon } from '$lib/api';
+  import { isDraw, userWon, type ChessComGame } from '$lib/api';
   import { getRelativeTimeFromNowString } from '$lib/date';
 
   const modalStore = getModalStore();
@@ -17,7 +17,7 @@
     parent.onClose();
   };
 
-  const onClick = (game: any) => {
+  const onClick = (game: ChessComGame) => {
     const orientation = game.white.username === username ? 'w' : 'b';
     onGameSelected(game, orientation);
     setDisabled(false);
@@ -25,7 +25,7 @@
     parent.onClose();
   };
 
-  const onKeyDown = (e: KeyboardEvent, game: any) => {
+  const onKeyDown = (e: KeyboardEvent, game: ChessComGame) => {
     if (e.key === 'Enter') {
       onClick(game);
     }

@@ -8,33 +8,52 @@ import type { GameRecord, GameResult, GameType } from '$lib/games';
  * page is expected to build richer visualizations (rating progression, per
  * opening performance, accuracy trends over time, etc.) on top of these
  * primitives. Keeping the computation here keeps the UI thin and testable.
- */ 
+ */
+
+function isLocalPlayer(name: string | undefined): boolean {
+  return name === 'Tu' || name === 'Tú';
+}
+
+function getPlayerColor(game: GameRecord): 'white' | 'black' | undefined {
+  if (game.playerColor) return game.playerColor;
+  if (isLocalPlayer(game.white)) return 'white';
+  if (isLocalPlayer(game.black)) return 'black';
+  return undefined;
+}
+
+function playerWon(game: GameRecord): boolean {
+  const color = getPlayerColor(game);
+  return (
+    (color === 'white' && game.result === '1-0') || (color === 'black' && game.result === '0-1')
+  );
+}
+
+function playerLost(game: GameRecord): boolean {
+  const color = getPlayerColor(game);
+  return (
+    (color === 'white' && game.result === '0-1') || (color === 'black' && game.result === '1-0')
+  );
+}
 
 // Victorias del jugador
 export function getWins(records: GameRecord[]): number {
-  return records.filter(
-    (g) => g.white === 'Tú' && g.result === '1-0'
-  ).length;
+  return records.filter(playerWon).length;
 }
 
 // Derrotas del jugador
 export function getLosses(records: GameRecord[]): number {
-  return records.filter(
-    (g) => g.white === 'Tú' && g.result === '0-1'
-  ).length;
+  return records.filter(playerLost).length;
 }
 
 // Partidas empatadas
 export function getDraws(records: GameRecord[]): number {
-  return records.filter(
-    (g) => g.result === '1/2-1/2'
-  ).length;
+  return records.filter((g) => g.result === '1/2-1/2').length;
 }
 
 export function getWinRate(records: GameRecord[]): number {
   if (records.length === 0) return 0;
 
-  const wins = records.filter((g) => g.result === '1-0').length;
+  const wins = records.filter(playerWon).length;
 
   return Math.round((wins / records.length) * 100);
 }
@@ -136,4 +155,3 @@ export function computeOpeningStats(records: GameRecord[]): OpeningStat[] {
     }))
     .sort((a, b) => b.count - a.count);
 }
-

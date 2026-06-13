@@ -1,7 +1,7 @@
 <script lang="ts">
   import { ProgressRadial } from '@skeletonlabs/skeleton';
 
-  export let onClick: (event: MouseEvent) => void = () => console.log('onClick event fired');
+  export let onClick: (event: MouseEvent) => void = () => {};
   export let isLoading: boolean = false;
   export let progress: number = 0;
 </script>
