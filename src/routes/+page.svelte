@@ -103,23 +103,33 @@
     </div>
 
     <div class="rounded-2xl border border-slate-700 bg-slate-800/70 p-6 shadow-lg shadow-black/10">
-      <p class="text-sm text-slate-400">Precisión promedio</p>
-      <p class="mt-3 text-4xl font-bold text-lime-400">
+<p class="text-sm text-slate-400">
+  Precisión promedio contra la IA
+</p>
+
+<p class="mt-3 text-4xl font-bold text-lime-400">
   {(() => {
-    const analyzed = $games.filter((g) => g.accuracy !== undefined);
+    const aiGames = $games.filter(
+      (g) =>
+        g.type === 'AI' &&
+        g.accuracy !== undefined
+    );
 
     const avg =
-      analyzed.length > 0
-        ? analyzed.reduce(
+      aiGames.length > 0
+        ? aiGames.reduce(
             (sum, g) => sum + (g.accuracy ?? 0),
             0
-          ) / analyzed.length
+          ) / aiGames.length
         : 0;
 
     return Math.round(avg);
   })()}%
 </p>
-      <p class="mt-2 text-sm text-slate-500">Basada en partidas analizadas</p>
+
+<p class="mt-2 text-sm text-slate-500">
+  Basada en partidas contra la IA
+</p>
     </div>
   </div>
 

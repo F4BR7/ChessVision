@@ -9,7 +9,9 @@
   $: barHeight = toEvaluationHeight(evaluation);
 </script>
 
-<div class="relative w-6 bg-black">
+<div
+  class="relative w-6 bg-black rounded-sm overflow-hidden self-stretch"
+>
   <div
     style:height="{barHeight * 100}%"
     class="absolute duration-200 bg-white left-0 right-0 bottom-0 h-1/2"

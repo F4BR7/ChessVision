@@ -174,31 +174,39 @@
   </div>
 {:else}
   <!-- Game Board -->
-  <div class="mx-auto my-6 md:my-10 max-w-[1285px] px-4">
+  <div class="flex justify-center gap-8 items-start">
     <div class="flex justify-center gap-8 items-start">
-      <EvaluationBar evaluation={{ score: 0, type: 'cp', pv: '', label: Label.UNDEFINED }} />
+<div class="flex-1">
+  <div class="mb-3 flex items-center gap-2 px-2 text-xl font-bold text-white">
+    ♟️ <span>
+      {difficulty === 1
+        ? 'Stockfish Principiante (~500 Elo)'
+        : difficulty === 2
+          ? 'Stockfish Aficionado (~900 Elo)'
+          : difficulty === 3
+            ? 'Stockfish Intermedio (~1400 Elo)'
+            : difficulty === 4
+              ? 'Stockfish Experto (~2200 Elo)'
+              : 'Stockfish Maestro (~3000 Elo)'}
+    </span>
+  </div>
 
-      <div class="flex-1">
-        <div class="mb-3 flex items-center gap-2 px-2 text-xl font-bold text-white">
-          ♟️ <span>
-            {difficulty === 1
-              ? 'Stockfish Principiante (~500 Elo)'
-              : difficulty === 2
-                ? 'Stockfish Aficionado (~900 Elo)'
-                : difficulty === 3
-                  ? 'Stockfish Intermedio (~1400 Elo)'
-                  : difficulty === 4
-                    ? 'Stockfish Experto (~2200 Elo)'
-                    : 'Stockfish Maestro (~3000 Elo)'}</span
-          >
-        </div>
+  <div class="flex gap-4 items-stretch ">
+      <EvaluationBar
+        evaluation={
+          $evaluations.length
+            ? $evaluations[$evaluations.length - 1]
+            : { score: 0, type: 'cp', pv: '', label: Label.UNDEFINED }
+        }
+      />
 
-        <Chessboard bind:this={chessboardRef} {showHints} />
+    <Chessboard bind:this={chessboardRef} {showHints} />
+  </div>
 
-        <div class="mt-3 flex items-center gap-2 px-2 text-xl font-bold text-white">
-          👤 <span>Tú</span>
-        </div>
-      </div>
+  <div class="mt-3 flex items-center gap-2 px-2 text-xl font-bold text-white">
+    👤 <span>Tú</span>
+  </div>
+</div>
       <!-- Game Controls -->
       <div class="w-[420px] shrink-0 pt-12">
         <div

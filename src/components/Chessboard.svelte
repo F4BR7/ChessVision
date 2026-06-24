@@ -306,4 +306,4 @@
   export { showHint };
 </script>
 
-<div class="w-full" bind:this={boardElement}></div>
+<div class="w-[720px]" bind:this={boardElement}></div>
